@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.model.entity;
+package dev.ramtin.aiplatform.message;
 
 public enum MessageRole {
     USER,

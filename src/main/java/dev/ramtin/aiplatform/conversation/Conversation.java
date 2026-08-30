@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.model.entity;
+package dev.ramtin.aiplatform.conversation;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,15 +13,14 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "users")
-public class User {
+@Document(collection = "conversations")
+public class Conversation {
     @Id
-    private int id;
-    private String username;
-    private String password;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private Role role;
+    private String id;
+    private String userId;
+    private String title;
+    private String model;
+    private ConversationStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

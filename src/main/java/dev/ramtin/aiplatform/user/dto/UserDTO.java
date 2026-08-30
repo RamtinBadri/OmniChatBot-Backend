@@ -1,6 +1,7 @@
-package dev.ramtin.aiplatform.model.dto.conversation;
+package dev.ramtin.aiplatform.user.dto;
 
-import dev.ramtin.aiplatform.model.entity.ConversationStatus;
+import dev.ramtin.aiplatform.user.Role;
+import dev.ramtin.aiplatform.user.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,12 +13,13 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ConversationDTO {
+public class UserDTO {
     private String id;
-    private String userId;
-    private String title;
-    private String model;
-    private ConversationStatus status;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private Role role;
+    private UserStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

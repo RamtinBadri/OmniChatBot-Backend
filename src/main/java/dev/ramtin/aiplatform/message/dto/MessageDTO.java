@@ -1,11 +1,10 @@
-package dev.ramtin.aiplatform.model.entity;
+package dev.ramtin.aiplatform.message.dto;
 
+import dev.ramtin.aiplatform.message.MessageRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -13,9 +12,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "messages")
-public class Message {
-    @Id
+public class MessageDTO {
     private String id;
     private String conversationId;
     private MessageRole role;

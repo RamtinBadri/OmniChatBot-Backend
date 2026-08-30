@@ -1,11 +1,11 @@
-package dev.ramtin.aiplatform.model.dto.user;
+package dev.ramtin.aiplatform.user;
 
-import dev.ramtin.aiplatform.model.entity.Role;
-import dev.ramtin.aiplatform.model.entity.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
@@ -13,13 +13,15 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserDTO {
-    private String id;
-    private String email;
+@Document(collection = "users")
+public class User {
+    @Id
+    private int id;
+    private String username;
+    private String password;
     private String firstName;
     private String lastName;
+    private String email;
     private Role role;
-    private UserStatus status;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
 }

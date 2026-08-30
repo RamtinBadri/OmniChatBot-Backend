@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.model.dto.user;
+package dev.ramtin.aiplatform.user.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

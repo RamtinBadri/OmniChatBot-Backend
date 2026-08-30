@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.model.dto.message;
+package dev.ramtin.aiplatform.conversation.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SendMessageRequest {
+public class CreateConversationRequest {
     @NotBlank
-    private String content;
+    private String title;
     private String model;
 }

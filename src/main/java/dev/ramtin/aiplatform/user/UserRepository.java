@@ -1,6 +1,5 @@
-package dev.ramtin.aiplatform.repository;
+package dev.ramtin.aiplatform.user;
 
-import dev.ramtin.aiplatform.model.entity.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

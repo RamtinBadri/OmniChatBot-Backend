@@ -1,6 +1,5 @@
-package dev.ramtin.aiplatform.repository;
+package dev.ramtin.aiplatform.message;
 
-import dev.ramtin.aiplatform.model.entity.Message;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;

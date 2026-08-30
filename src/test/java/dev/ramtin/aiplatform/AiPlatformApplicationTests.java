@@ -1,10 +1,10 @@
-package com.example.intern_project;
+package dev.ramtin.aiplatform;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class InternProjectApplicationTests {
+class AiPlatformApplicationTests {
 
 	@Test
 	void contextLoads() {
