@@ -1,4 +1,4 @@
-package com.example.project.model.entity;
+package dev.ramtin.aiplatform.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
