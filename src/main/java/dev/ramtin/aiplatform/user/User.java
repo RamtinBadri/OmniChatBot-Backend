@@ -16,12 +16,14 @@ import java.time.LocalDateTime;
 @Document(collection = "users")
 public class User {
     @Id
-    private int id;
+    private String id;
     private String username;
     private String password;
     private String firstName;
     private String lastName;
     private String email;
-    private Role role;
+    private UserRole userRole;
+    private UserStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

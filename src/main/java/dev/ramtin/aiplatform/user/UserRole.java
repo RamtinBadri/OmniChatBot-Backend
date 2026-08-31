@@ -1,6 +1,6 @@
 package dev.ramtin.aiplatform.user;
 
-public enum Role {
+public enum UserRole {
     USER,
     ADMIN
 }

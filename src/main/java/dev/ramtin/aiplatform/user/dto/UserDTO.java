@@ -1,6 +1,6 @@
 package dev.ramtin.aiplatform.user.dto;
 
-import dev.ramtin.aiplatform.user.Role;
+import dev.ramtin.aiplatform.user.UserRole;
 import dev.ramtin.aiplatform.user.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -18,7 +18,7 @@ public class UserDTO {
     private String email;
     private String firstName;
     private String lastName;
-    private Role role;
+    private UserRole userRole;
     private UserStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
