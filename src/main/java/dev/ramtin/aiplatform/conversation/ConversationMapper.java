@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ConversationMapper {
-    public ConversationDTO toDTO(Conversation conversation) {
+    public static ConversationDTO toDTO(Conversation conversation) {
         if (conversation == null) {
             return null;
         }

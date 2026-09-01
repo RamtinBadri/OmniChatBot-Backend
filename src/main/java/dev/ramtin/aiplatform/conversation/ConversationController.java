@@ -6,6 +6,8 @@ import dev.ramtin.aiplatform.conversation.dto.UpdateConversationRequest;
 import dev.ramtin.aiplatform.conversation.service.ConversationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -43,5 +45,16 @@ public class ConversationController {
     public ResponseEntity<Void> archiveConversation(@PathVariable String conversationId) {
         conversationService.archiveConversation(conversationId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<ConversationDTO>> getConversations(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean archived,
+            Pageable pageable) {
+        String userId = "dummy-id";
+        Page<ConversationDTO> conversations = conversationService
+                .getConversations(userId, search, archived, pageable);
+        return ResponseEntity.ok(conversations);
     }
 }

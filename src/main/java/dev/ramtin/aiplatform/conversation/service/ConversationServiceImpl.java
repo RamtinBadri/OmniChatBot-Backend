@@ -7,6 +7,8 @@ import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,7 +17,6 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class ConversationServiceImpl implements ConversationService {
     private final ConversationRepository conversationRepository;
-    private final ConversationMapper conversationMapper;
 
     @Override
     public ConversationDTO createConversation(String userId, String title, String model) {
@@ -31,14 +32,14 @@ public class ConversationServiceImpl implements ConversationService {
                 .build();
 
         Conversation savedConversation = conversationRepository.save(conversation);
-        return conversationMapper.toDTO(savedConversation);
+        return ConversationMapper.toDTO(savedConversation);
     }
 
     @Override
     public ConversationDTO getConversationById(String conversationId) {
         Conversation conversation = conversationRepository.findById(conversationId).orElseThrow(() ->
                 new ResourceNotFoundException("Conversation not found with id: " + conversationId));
-        return conversationMapper.toDTO(conversation);
+        return ConversationMapper.toDTO(conversation);
     }
 
     @Override
@@ -51,7 +52,7 @@ public class ConversationServiceImpl implements ConversationService {
 
         Conversation updatedConversation = conversationRepository.save(conversation);
 
-        return conversationMapper.toDTO(updatedConversation);
+        return ConversationMapper.toDTO(updatedConversation);
     }
 
     @Override
@@ -63,5 +64,12 @@ public class ConversationServiceImpl implements ConversationService {
         conversation.setUpdatedAt(LocalDateTime.now());
 
         conversationRepository.save(conversation);
+    }
+
+    @Override
+    public Page<ConversationDTO> getConversations(String userId, String search,
+                                                  Boolean archived, Pageable pageable) {
+        return conversationRepository.search(userId, search, archived, pageable)
+                .map(ConversationMapper::toDTO);
     }
 }
