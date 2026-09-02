@@ -5,6 +5,8 @@ import dev.ramtin.aiplatform.message.dto.SendMessageRequest;
 import dev.ramtin.aiplatform.message.service.MessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,5 +34,12 @@ public class MessageController {
                                                      @PathVariable String messageId) {
         MessageDTO messageDTO = messageService.getMessageById(messageId);
         return ResponseEntity.ok(messageDTO);
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<MessageDTO>> getMessages(@PathVariable String conversationId,
+            Pageable pageable) {
+        Page<MessageDTO> messages = messageService.getMessages(conversationId, pageable);
+        return ResponseEntity.ok(messages);
     }
 }

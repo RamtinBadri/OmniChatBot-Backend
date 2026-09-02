@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class MessageMapper {
 
-    public MessageDTO toDTO(Message message) {
+    public static MessageDTO toDTO(Message message) {
         if (message == null) {
             return null;
         }

@@ -7,6 +7,8 @@ import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.message.dto.MessageDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,13 +17,12 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
-    private final MessageMapper messageMapper;
 
     @Override
     public MessageDTO getMessageById(String messageId) {
         Message message = messageRepository.findById(messageId).orElseThrow(() ->
                         new ResourceNotFoundException("Message not found with id: " + messageId));
-        return messageMapper.toDTO(message);
+        return MessageMapper.toDTO(message);
     }
 
     @Override
@@ -33,6 +34,12 @@ public class MessageServiceImpl implements MessageService {
                 .createdAt(LocalDateTime.now())
                 .build();
         Message savedMessage = messageRepository.save(message);
-        return messageMapper.toDTO(savedMessage);
+        return MessageMapper.toDTO(savedMessage);
+    }
+
+    @Override
+    public Page<MessageDTO> getMessages(String conversationId, Pageable pageable) {
+        return messageRepository.findByConversationId(conversationId, pageable)
+                .map(MessageMapper::toDTO);
     }
 }
