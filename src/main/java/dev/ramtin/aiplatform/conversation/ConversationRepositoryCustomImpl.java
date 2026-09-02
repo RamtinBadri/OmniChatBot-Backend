@@ -15,15 +15,15 @@ public class ConversationRepositoryCustomImpl implements ConversationRepositoryC
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Conversation> search(String userId, String search, Boolean archived, Pageable pageable) {
+    public Page<Conversation> search(String userId, String search, ConversationStatus status, Pageable pageable) {
         Criteria criteria = Criteria.where("userId").is(userId);
 
         if (search != null && !search.isBlank()) {
             criteria.and("title").regex(search, "i");
         }
 
-        if (archived != null) {
-            criteria.and("archived").is(archived);
+        if (status != null) {
+            criteria.and("status").is(status);
         }
 
         Query query = new Query(criteria).with(pageable);

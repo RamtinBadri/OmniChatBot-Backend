@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.conversation.service;
 
+import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,5 +14,5 @@ public interface ConversationService {
 
     void archiveConversation(String conversationId);
 
-    Page<ConversationDTO> getConversations(String userId, String search, Boolean archived, Pageable pageable);
+    Page<ConversationDTO> getConversations(String userId, String search, ConversationStatus status, Pageable pageable);
 }

@@ -68,8 +68,8 @@ public class ConversationServiceImpl implements ConversationService {
 
     @Override
     public Page<ConversationDTO> getConversations(String userId, String search,
-                                                  Boolean archived, Pageable pageable) {
-        return conversationRepository.search(userId, search, archived, pageable)
+                                                  ConversationStatus status, Pageable pageable) {
+        return conversationRepository.search(userId, search, status, pageable)
                 .map(ConversationMapper::toDTO);
     }
 }
