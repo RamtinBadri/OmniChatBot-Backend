@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @Document(collection = "conversations")
 @CompoundIndexes({
         @CompoundIndex(name = "userId_updatedAt",
-                def = "{'userId: 1, 'updatedAt': -1}"),
+                def = "{'userId': 1, 'updatedAt': -1}"),
         @CompoundIndex(name = "userId_status_updatedAt",
                 def = "{'userId': 1, 'status': 1,'updatedAt': -1}")
 })
