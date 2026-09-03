@@ -50,11 +50,11 @@ public class ConversationController {
     @GetMapping
     public ResponseEntity<Page<ConversationDTO>> getConversations(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Boolean archived,
+            @RequestParam(required = false) ConversationStatus status,
             Pageable pageable) {
         String userId = "dummy-id";
         Page<ConversationDTO> conversations = conversationService
-                .getConversations(userId, search, archived, pageable);
+                .getConversations(userId, search, status, pageable);
         return ResponseEntity.ok(conversations);
     }
 }
