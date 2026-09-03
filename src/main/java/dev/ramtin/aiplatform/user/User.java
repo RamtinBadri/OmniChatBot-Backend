@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -22,10 +23,12 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     private String id;
+    @Indexed(name = "username_unique", unique = true)
     private String username;
     private String password;
     private String firstName;
     private String lastName;
+    @Indexed(name = "email_unique", unique = true)
     private String email;
     private UserRole userRole;
     private UserStatus status;
