@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.message.service;
 
+import dev.ramtin.aiplatform.conversation.ConversationRepository;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageMapper;
 import dev.ramtin.aiplatform.message.MessageRepository;
@@ -17,6 +18,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
     private final MessageRepository messageRepository;
+    private final ConversationRepository conversationRepository;
 
     @Override
     public MessageDTO getMessageById(String messageId) {
@@ -27,6 +29,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public MessageDTO createMessage(String conversationId, String content) {
+        conversationRepository.findById(conversationId).orElseThrow(() ->
+                        new ResourceNotFoundException("Conversation not found with id: " + conversationId));
+
         Message message = Message.builder()
                 .conversationId(conversationId)
                 .role(MessageRole.USER)
@@ -39,6 +44,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Page<MessageDTO> getMessages(String conversationId, Pageable pageable) {
+        conversationRepository.findById(conversationId).orElseThrow(() ->
+                        new ResourceNotFoundException("Conversation not found with id: " + conversationId));
+
         return messageRepository.findByConversationId(conversationId, pageable)
                 .map(MessageMapper::toDTO);
     }
