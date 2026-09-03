@@ -4,6 +4,7 @@ import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.user.User;
 import dev.ramtin.aiplatform.user.UserMapper;
 import dev.ramtin.aiplatform.user.UserRepository;
+import dev.ramtin.aiplatform.user.UserStatus;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,7 +24,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Page<UserDTO> getUsers(String search, String role, String status, Pageable pageable) {
+    public Page<UserDTO> getUsers(String search, String role, UserStatus status, Pageable pageable) {
         return userRepository.search(search, role, status, pageable).map(UserMapper::toDTO);
     }
 }

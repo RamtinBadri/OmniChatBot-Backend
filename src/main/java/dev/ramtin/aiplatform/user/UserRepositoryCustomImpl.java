@@ -15,7 +15,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public Page<User> search(String search, String role, String status, Pageable pageable) {
+    public Page<User> search(String search, String role, UserStatus status, Pageable pageable) {
         Query query = new Query();
 
         if (search != null && !search.isBlank()) {
@@ -32,7 +32,7 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
             query.addCriteria(Criteria.where("userRole").is(role));
         }
 
-        if (status != null && !status.isBlank()) {
+        if (status != null) {
             query.addCriteria(Criteria.where("status").is(status));
         }
 

@@ -24,7 +24,7 @@ public class UserController {
     public ResponseEntity<Page<UserDTO>> getUsers(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String role,
-            @RequestParam(required = false) String status,
+            @RequestParam(required = false) UserStatus status,
             Pageable pageable
     ) {
         Page<UserDTO> users = userService.getUsers(search, role, status, pageable);

@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.user.service;
 
+import dev.ramtin.aiplatform.user.UserStatus;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -7,7 +8,7 @@ import org.springframework.data.domain.Pageable;
 public interface UserService {
     UserDTO getUserById(String userId);
 
-    Page<UserDTO> getUsers(String search, String role, String status, Pageable pageable);
+    Page<UserDTO> getUsers(String search, String role, UserStatus status, Pageable pageable);
 
     // TODO: UserDTO createUser(CreateUserRequest request);
 
