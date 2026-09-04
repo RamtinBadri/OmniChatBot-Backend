@@ -103,6 +103,7 @@ Public.
 
 ```json
 {
+  "username": "ramtin",
   "email": "user@example.com",
   "password": "password123",
   "firstName": "Ramtin",
@@ -114,22 +115,17 @@ Public.
 
 **201 Created**
 
-```json
-{
-  "id": "64f123",
-  "email": "user@example.com",
-  "firstName": "Ramtin",
-  "lastName": "Example",
-  "role": "USER",
-  "status": "ACTIVE",
-  "createdAt": "2026-08-30T12:00:00"
-}
+The user is created with:
+
+```text
+role = USER
+status = ACTIVE
 ```
 
 ### Possible Errors
 
-- `400 Bad Request`
-- `409 Conflict`
+* `400 Bad Request`
+* `409 Conflict`
 
 ---
 
@@ -149,7 +145,7 @@ Public.
 
 ```json
 {
-  "email": "user@example.com",
+  "username": "ramtin",
   "password": "password123"
 }
 ```
@@ -158,29 +154,73 @@ Public.
 
 **200 OK**
 
-```json
-{
-  "token": "eyJhbGciOi...",
-  "user": {
-    "id": "64f123",
-    "email": "user@example.com",
-    "firstName": "Ramtin",
-    "lastName": "Example",
-    "role": "USER"
-  }
-}
+Returns the JWT:
+
+```text
+eyJhbGciOi...
+```
+
+The token must subsequently be provided through the `Authorization` header:
+
+```http
+Authorization: Bearer <JWT>
 ```
 
 ### Possible Errors
 
-- `400 Bad Request`
-- `401 Unauthorized`
+* `400 Bad Request`
+* `401 Unauthorized`
 
 ---
 
 # 7. User API
 
-## 7.1 Get Users
+## 7.1 Get Current User
+
+### Endpoint
+
+```http
+GET /api/users/me
+```
+
+### Authentication
+
+Required.
+
+### Authorization
+
+Any authenticated user.
+
+The backend identifies the user from the JWT. The user ID must not be provided by the client.
+
+### Response
+
+**200 OK**
+
+Returns the authenticated user's `UserDTO`.
+
+Example:
+
+```json
+{
+  "id": "64f123",
+  "email": "user@example.com",
+  "firstName": "Ramtin",
+  "lastName": "Example",
+  "userRole": "USER",
+  "status": "ACTIVE",
+  "createdAt": "2026-08-30T12:00:00",
+  "updatedAt": "2026-08-30T12:00:00"
+}
+```
+
+### Possible Errors
+
+* `401 Unauthorized`
+
+---
+
+## 7.2 Get Users
 
 ### Endpoint
 
@@ -198,14 +238,14 @@ Required.
 
 ### Query Parameters
 
-| Parameter | Description | Example |
-|---|---|---|
-| `page` | Page number | `0` |
-| `size` | Number of records per page | `20` |
-| `sort` | Sorting field and direction | `createdAt,desc` |
-| `role` | Filter by user role | `USER` |
-| `status` | Filter by user status | `ACTIVE` |
-| `search` | Search users | `ramtin` |
+| Parameter | Description                 | Example          |
+| --------- | --------------------------- | ---------------- |
+| `page`    | Page number                 | `0`              |
+| `size`    | Number of records per page  | `20`             |
+| `sort`    | Sorting field and direction | `createdAt,desc` |
+| `role`    | Filter by user role         | `USER`           |
+| `status`  | Filter by user status       | `ACTIVE`         |
+| `search`  | Search users                | `ramtin`         |
 
 ### Example
 
@@ -225,7 +265,7 @@ GET /api/users?page=0&size=20&sort=createdAt,desc&status=ACTIVE
       "email": "user@example.com",
       "firstName": "Ramtin",
       "lastName": "Example",
-      "role": "USER",
+      "userRole": "USER",
       "status": "ACTIVE",
       "createdAt": "2026-08-30T12:00:00",
       "updatedAt": "2026-08-30T12:00:00"
@@ -240,12 +280,12 @@ GET /api/users?page=0&size=20&sort=createdAt,desc&status=ACTIVE
 
 ### Possible Errors
 
-- `401 Unauthorized`
-- `403 Forbidden`
+* `401 Unauthorized`
+* `403 Forbidden`
 
 ---
 
-## 7.2 Get User
+## 7.3 Get User
 
 ### Endpoint
 
@@ -269,13 +309,13 @@ Returns a `UserDTO`.
 
 ### Possible Errors
 
-- `401 Unauthorized`
-- `403 Forbidden`
-- `404 Not Found`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
 
 ---
 
-## 7.3 Update User
+## 7.4 Update User
 
 ### Endpoint
 
@@ -286,6 +326,14 @@ PUT /api/users/{id}
 ### Authentication
 
 Required.
+
+### Authorization
+
+An authenticated `USER` may only update their own profile.
+
+The `{id}` in the URL must match the authenticated user's ID from the JWT.
+
+The endpoint updates profile information only. The user cannot modify their own role or status through this endpoint.
 
 ### Request Body
 
@@ -305,15 +353,54 @@ Returns the updated `UserDTO`.
 
 ### Possible Errors
 
-- `400 Bad Request`
-- `401 Unauthorized`
-- `403 Forbidden`
-- `404 Not Found`
-- `409 Conflict`
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+* `409 Conflict`
 
 ---
 
-## 7.4 Delete User
+## 7.5 Update User Role
+
+### Endpoint
+
+```http
+PATCH /api/admin/users/{id}/role
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Request Body
+
+```json
+{
+  "role": "ADMIN"
+}
+```
+
+The request may contain only the user's new role.
+
+### Response
+
+**204 No Content**
+
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+## 7.6 Delete User
 
 ### Endpoint
 
@@ -335,9 +422,9 @@ Required.
 
 ### Possible Errors
 
-- `401 Unauthorized`
-- `403 Forbidden`
-- `404 Not Found`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
 
 ---
 
@@ -402,13 +489,13 @@ Only conversations belonging to the authenticated user are returned.
 
 ### Query Parameters
 
-| Parameter | Description |
-|---|---|
-| `page` | Page number |
-| `size` | Number of records per page |
-| `sort` | Sorting field and direction |
-| `status` | Filter by conversation status |
-| `search` | Search conversations |
+| Parameter | Description                   |
+| --------- | ----------------------------- |
+| `page`    | Page number                   |
+| `size`    | Number of records per page    |
+| `sort`    | Sorting field and direction   |
+| `status`  | Filter by conversation status |
+| `search`  | Search conversations          |
 
 ### Example
 
@@ -446,9 +533,9 @@ Returns a `ConversationDTO`.
 
 ### Possible Errors
 
-- `401 Unauthorized`
-- `403 Forbidden`
-- `404 Not Found`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
 
 ---
 
@@ -464,6 +551,8 @@ PUT /api/conversations/{id}
 
 Required.
 
+Users may only update conversations that belong to them.
+
 ### Request Body
 
 ```json
@@ -477,6 +566,13 @@ Required.
 **200 OK**
 
 Returns the updated `ConversationDTO`.
+
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
 
 ---
 
@@ -492,6 +588,8 @@ PATCH /api/conversations/{id}/archive
 
 Required.
 
+Users may only archive conversations that belong to them.
+
 ### Response
 
 **200 OK**
@@ -501,6 +599,12 @@ The conversation status is changed to:
 ```text
 ARCHIVED
 ```
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
 
 ---
 
@@ -530,11 +634,11 @@ The authenticated user must own the specified conversation.
 
 ### Query Parameters
 
-| Parameter | Description |
-|---|---|
-| `page` | Page number |
-| `size` | Number of messages per page |
-| `sort` | Sorting field and direction |
+| Parameter | Description                 |
+| --------- | --------------------------- |
+| `page`    | Page number                 |
+| `size`    | Number of messages per page |
+| `sort`    | Sorting field and direction |
 
 ### Example
 
@@ -585,6 +689,8 @@ POST /api/conversations/{conversationId}/messages
 
 Required.
 
+The authenticated user must own the specified conversation.
+
 ### Request Body
 
 ```json
@@ -630,21 +736,28 @@ Frontend
 
 Returns the created `MessageDTO`.
 
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
 ---
 
 # 10. HTTP Status Codes
 
-| Status Code | Meaning |
-|---|---|
-| `200 OK` | Request completed successfully |
-| `201 Created` | Resource successfully created |
-| `204 No Content` | Request succeeded without a response body |
-| `400 Bad Request` | Invalid request |
-| `401 Unauthorized` | Authentication is missing or invalid |
-| `403 Forbidden` | Authenticated user does not have permission |
-| `404 Not Found` | Requested resource does not exist |
-| `409 Conflict` | Request conflicts with existing data |
-| `500 Internal Server Error` | Unexpected server-side error |
+| Status Code                 | Meaning                                     |
+| --------------------------- | ------------------------------------------- |
+| `200 OK`                    | Request completed successfully              |
+| `201 Created`               | Resource successfully created               |
+| `204 No Content`            | Request succeeded without a response body   |
+| `400 Bad Request`           | Invalid request                             |
+| `401 Unauthorized`          | Authentication is missing or invalid        |
+| `403 Forbidden`             | Authenticated user does not have permission |
+| `404 Not Found`             | Requested resource does not exist           |
+| `409 Conflict`              | Request conflicts with existing data        |
+| `500 Internal Server Error` | Unexpected server-side error                |
 
 ---
 
