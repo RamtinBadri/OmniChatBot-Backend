@@ -4,7 +4,7 @@
 
 This document defines the API contract between the AI Platform backend and its clients.
 
-The backend is responsible for authentication, user management, conversation management, message storage, and communication with external AI services.
+The backend is responsible for authentication, user management, conversation management, message storage, ticket management, and communication with external AI services.
 
 Clients must communicate with AI services through the backend and must not access external AI providers directly.
 
@@ -64,7 +64,7 @@ Example:
   "email": "user@example.com",
   "firstName": "Ramtin",
   "lastName": "Example",
-  "role": "USER",
+  "userRole": "USER",
   "status": "ACTIVE"
 }
 ```
@@ -592,7 +592,7 @@ Users may only archive conversations that belong to them.
 
 ### Response
 
-**200 OK**
+**204 No Content**
 
 The conversation status is changed to:
 
@@ -675,9 +675,45 @@ GET /api/conversations/conv123/messages?page=0&size=50&sort=createdAt,asc
 }
 ```
 
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
 ---
 
-## 9.2 Send Message
+## 9.2 Get Message
+
+### Endpoint
+
+```http
+GET /api/conversations/{conversationId}/messages/{messageId}
+```
+
+### Authentication
+
+Required.
+
+The authenticated user must own the specified conversation.
+
+The requested message must also belong to the specified conversation.
+
+### Response
+
+**200 OK**
+
+Returns a `MessageDTO`.
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+## 9.3 Send Message
 
 ### Endpoint
 
@@ -745,7 +781,451 @@ Returns the created `MessageDTO`.
 
 ---
 
-# 10. HTTP Status Codes
+# 10. Ticket API
+
+The ticketing system allows users to submit support requests and allows administrators to manage those requests.
+
+A ticket belongs to the user who created it.
+
+```text
+User
+  ↓
+Ticket
+  ↓
+Ticket History
+```
+
+Users may only access their own tickets.
+
+Administrators may access and manage all tickets.
+
+---
+
+## 10.1 Create Ticket
+
+### Endpoint
+
+```http
+POST /api/tickets
+```
+
+### Authentication
+
+Required.
+
+### Authorization
+
+Any authenticated user.
+
+The `userId` must not be provided by the client.
+
+The backend identifies the ticket owner from the authenticated user's JWT.
+
+### Request Body
+
+```json
+{
+  "subject": "Cannot access my account",
+  "description": "I cannot log in after resetting my password."
+}
+```
+
+### Response
+
+**201 Created**
+
+Example:
+
+```json
+{
+  "id": "ticket123",
+  "userId": "user456",
+  "subject": "Cannot access my account",
+  "description": "I cannot log in after resetting my password.",
+  "status": "OPEN",
+  "createdAt": "2026-08-30T12:00:00",
+  "updatedAt": "2026-08-30T12:00:00"
+}
+```
+
+New tickets are initially created with:
+
+```text
+status = OPEN
+```
+
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+
+---
+
+## 10.2 Get User Tickets
+
+### Endpoint
+
+```http
+GET /api/tickets
+```
+
+### Authentication
+
+Required.
+
+### Authorization
+
+Any authenticated user.
+
+Only tickets belonging to the authenticated user are returned.
+
+### Query Parameters
+
+| Parameter | Description                 |
+| --------- | --------------------------- |
+| `page`    | Page number                 |
+| `size`    | Number of tickets per page  |
+| `sort`    | Sorting field and direction |
+| `status`  | Filter by ticket status     |
+| `search`  | Search tickets              |
+
+### Example
+
+```http
+GET /api/tickets?page=0&size=20&sort=updatedAt,desc&status=OPEN
+```
+
+### Response
+
+**200 OK**
+
+Returns a paginated list of `TicketDTO`.
+
+### Possible Errors
+
+* `401 Unauthorized`
+
+---
+
+## 10.3 Get Ticket
+
+### Endpoint
+
+```http
+GET /api/tickets/{ticketId}
+```
+
+### Authentication
+
+Required.
+
+### Authorization
+
+A user may only access a ticket that belongs to them.
+
+Administrators may access any ticket.
+
+### Response
+
+**200 OK**
+
+Returns a `TicketDTO`.
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+# 11. Admin Ticket API
+
+Administrative ticket operations are separated from user ticket operations under:
+
+```text
+/api/admin/tickets
+```
+
+All endpoints in this section require the `ADMIN` role.
+
+---
+
+## 11.1 Get All Tickets
+
+### Endpoint
+
+```http
+GET /api/admin/tickets
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Query Parameters
+
+| Parameter | Description                 |
+| --------- | --------------------------- |
+| `page`    | Page number                 |
+| `size`    | Number of tickets per page  |
+| `sort`    | Sorting field and direction |
+| `status`  | Filter by ticket status     |
+| `search`  | Search tickets              |
+| `userId`  | Filter by ticket owner      |
+
+### Example
+
+```http
+GET /api/admin/tickets?page=0&size=20&sort=updatedAt,desc&status=OPEN
+```
+
+### Response
+
+**200 OK**
+
+Returns a paginated list of `TicketDTO`.
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+
+---
+
+## 11.2 Get Ticket
+
+### Endpoint
+
+```http
+GET /api/admin/tickets/{ticketId}
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Response
+
+**200 OK**
+
+Returns the requested `TicketDTO`.
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+## 11.3 Reply to Ticket
+
+### Endpoint
+
+```http
+POST /api/admin/tickets/{ticketId}/replies
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Request Body
+
+```json
+{
+  "message": "We have identified the issue and are working on a fix."
+}
+```
+
+The administrator's identity is obtained from the authenticated JWT and must not be provided by the client.
+
+The reply is stored as part of the ticket history.
+
+### Response
+
+**201 Created**
+
+Returns the created ticket history/reply record.
+
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+## 11.4 Update Ticket Status
+
+### Endpoint
+
+```http
+PATCH /api/admin/tickets/{ticketId}/status
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Request Body
+
+```json
+{
+  "status": "IN_PROGRESS"
+}
+```
+
+Supported statuses:
+
+```text
+OPEN
+IN_PROGRESS
+RESOLVED
+CLOSED
+```
+
+Every status change must be recorded in the ticket history.
+
+### Response
+
+**204 No Content**
+
+### Possible Errors
+
+* `400 Bad Request`
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+## 11.5 Get Ticket History
+
+### Endpoint
+
+```http
+GET /api/admin/tickets/{ticketId}/history
+```
+
+### Authentication
+
+Required.
+
+### Required Role
+
+`ADMIN`
+
+### Query Parameters
+
+| Parameter | Description                 |
+| --------- | --------------------------- |
+| `page`    | Page number                 |
+| `size`    | Number of history records   |
+| `sort`    | Sorting field and direction |
+
+### Example
+
+```http
+GET /api/admin/tickets/ticket123/history?page=0&size=20&sort=createdAt,asc
+```
+
+### Response
+
+**200 OK**
+
+Returns a paginated list of ticket history records.
+
+Example:
+
+```json
+{
+  "content": [
+    {
+      "id": "history123",
+      "ticketId": "ticket123",
+      "userId": "admin456",
+      "type": "STATUS_CHANGE",
+      "status": "IN_PROGRESS",
+      "message": null,
+      "createdAt": "2026-08-30T13:00:00"
+    },
+    {
+      "id": "history124",
+      "ticketId": "ticket123",
+      "userId": "admin456",
+      "type": "REPLY",
+      "status": null,
+      "message": "We are working on the issue.",
+      "createdAt": "2026-08-30T13:05:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 2,
+  "totalPages": 1
+}
+```
+
+### Possible Errors
+
+* `401 Unauthorized`
+* `403 Forbidden`
+* `404 Not Found`
+
+---
+
+# 12. Ticket History
+
+Ticket history records important actions performed on a ticket.
+
+At minimum, the following actions must be recorded:
+
+```text
+STATUS_CHANGE
+REPLY
+```
+
+Each history record contains information about:
+
+```text
+ticketId
+userId
+type
+status
+message
+createdAt
+```
+
+The `userId` identifies the user who performed the action.
+
+For status changes, `status` contains the new status.
+
+For replies, `message` contains the administrator's response.
+
+Ticket history is append-only. Existing history records should not be modified when a new action occurs.
+
+---
+
+# 13. HTTP Status Codes
 
 | Status Code                 | Meaning                                     |
 | --------------------------- | ------------------------------------------- |
@@ -761,7 +1241,7 @@ Returns the created `MessageDTO`.
 
 ---
 
-# 11. Pagination
+# 14. Pagination
 
 All potentially large collection endpoints must support pagination.
 
@@ -790,11 +1270,11 @@ The backend must not retrieve an unbounded number of documents from MongoDB for 
 
 ---
 
-# 12. Search and Filtering
+# 15. Search and Filtering
 
 Collection endpoints should support search and filtering where applicable.
 
-Example:
+Examples:
 
 ```http
 GET /api/users?status=ACTIVE&role=USER
@@ -804,19 +1284,28 @@ GET /api/users?status=ACTIVE&role=USER
 GET /api/conversations?status=ACTIVE&search=spring
 ```
 
+```http
+GET /api/tickets?status=OPEN&search=account
+```
+
+```http
+GET /api/admin/tickets?status=OPEN&userId=user456
+```
+
 Filtering and search implementations must be designed with MongoDB query performance and appropriate indexes in mind.
 
 ---
 
-# 13. API Versioning
+# 16. API Versioning
 
 The initial version of the API does not include an explicit version in the URL.
 
-Example:
+Examples:
 
 ```text
 /api/users
 /api/conversations
+/api/tickets
 ```
 
 If API versioning becomes necessary, a version can be introduced in a future release:
@@ -827,7 +1316,7 @@ If API versioning becomes necessary, a version can be introduced in a future rel
 
 ---
 
-# 14. Future Phase 2 APIs
+# 17. Future Phase 2 APIs
 
 The following resources are planned for Phase 2:
 
@@ -838,6 +1327,4 @@ The following resources are planned for Phase 2:
 /api/subscriptions
 /api/payments
 /api/transactions
-/api/tickets
-/api/admin
 ```
