@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.user;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;
@@ -7,4 +8,5 @@ import java.util.Optional;
 public interface UserRepository
         extends MongoRepository<User, String>, UserRepositoryCustom {
     Optional<User> findByEmail(String email);
+    Optional<User> findByUsername(@NonNull String username);
 }

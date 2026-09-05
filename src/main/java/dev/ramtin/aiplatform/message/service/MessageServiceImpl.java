@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.message.service;
 
+import dev.ramtin.aiplatform.conversation.Conversation;
 import dev.ramtin.aiplatform.conversation.ConversationRepository;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageMapper;
@@ -10,6 +11,7 @@ import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,33 +23,47 @@ public class MessageServiceImpl implements MessageService {
     private final ConversationRepository conversationRepository;
 
     @Override
-    public MessageDTO getMessageById(String messageId) {
+    public MessageDTO getMessageById(String conversationId, String messageId, String userId) {
+        getConversationForUser(conversationId, userId);
+
         Message message = messageRepository.findById(messageId).orElseThrow(() ->
                         new ResourceNotFoundException("Message not found with id: " + messageId));
+
+        if (!message.getConversationId().equals(conversationId)) {
+            throw new ResourceNotFoundException("Message not found in conversation: " + conversationId);
+        }
+
         return MessageMapper.toDTO(message);
     }
 
     @Override
-    public MessageDTO createMessage(String conversationId, String content) {
-        conversationRepository.findById(conversationId).orElseThrow(() ->
-                        new ResourceNotFoundException("Conversation not found with id: " + conversationId));
-
+    public MessageDTO createMessage(String conversationId, String content, String userId) {
+        getConversationForUser(conversationId, userId);
         Message message = Message.builder()
                 .conversationId(conversationId)
                 .role(MessageRole.USER)
                 .content(content)
                 .createdAt(LocalDateTime.now())
                 .build();
+
         Message savedMessage = messageRepository.save(message);
         return MessageMapper.toDTO(savedMessage);
     }
 
     @Override
-    public Page<MessageDTO> getMessages(String conversationId, Pageable pageable) {
-        conversationRepository.findById(conversationId).orElseThrow(() ->
-                        new ResourceNotFoundException("Conversation not found with id: " + conversationId));
+    public Page<MessageDTO> getMessages(String conversationId, String userId, Pageable pageable) {
+        getConversationForUser(conversationId, userId);
 
         return messageRepository.findByConversationId(conversationId, pageable)
                 .map(MessageMapper::toDTO);
+    }
+
+    private void getConversationForUser(String conversationId, String userId) {
+        Conversation conversation = conversationRepository.findById(conversationId).orElseThrow(() ->
+                        new ResourceNotFoundException("Conversation not found with id: " + conversationId));
+
+        if (!conversation.getUserId().equals(userId)) {
+            throw new AccessDeniedException("You do not have access to this conversation");
+        }
     }
 }

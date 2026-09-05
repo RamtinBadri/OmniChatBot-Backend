@@ -8,11 +8,11 @@ import org.springframework.data.domain.Pageable;
 public interface ConversationService {
     ConversationDTO createConversation(String userId, String title, String model);
 
-    ConversationDTO getConversationById(String conversationId);
+    ConversationDTO getConversationById(String conversationId, String userId);
 
-    ConversationDTO updateConversation(String conversationId, String title);
+    ConversationDTO updateConversation(String conversationId, String userId, String title);
 
-    void archiveConversation(String conversationId);
+    void archiveConversation(String conversationId, String userId);
 
     Page<ConversationDTO> getConversations(String userId, String search, ConversationStatus status, Pageable pageable);
 }
