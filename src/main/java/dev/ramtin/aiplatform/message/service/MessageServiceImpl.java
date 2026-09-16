@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.message.service;
 
+import dev.ramtin.aiplatform.ai.AIService;
 import dev.ramtin.aiplatform.conversation.Conversation;
 import dev.ramtin.aiplatform.conversation.ConversationRepository;
 import dev.ramtin.aiplatform.message.Message;
@@ -8,6 +9,7 @@ import dev.ramtin.aiplatform.message.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.message.dto.MessageDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
+import dev.ramtin.aiplatform.message.dto.MessageExchangeDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import java.time.LocalDateTime;
 @Service
 @RequiredArgsConstructor
 public class MessageServiceImpl implements MessageService {
+    private final AIService aiService;
     private final MessageRepository messageRepository;
     private final ConversationRepository conversationRepository;
 
@@ -37,8 +40,9 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public MessageDTO createMessage(String conversationId, String content, String userId) {
+    public MessageExchangeDTO createMessage(String conversationId, String content, String userId) {
         getConversationForUser(conversationId, userId);
+
         Message message = Message.builder()
                 .conversationId(conversationId)
                 .role(MessageRole.USER)
@@ -46,8 +50,22 @@ public class MessageServiceImpl implements MessageService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Message savedMessage = messageRepository.save(message);
-        return MessageMapper.toDTO(savedMessage);
+        Message savedUserMessage = messageRepository.save(message);
+
+
+        String assistantContent = aiService.generateResponse(userId, conversationId);
+
+        Message assistantMessage = Message.builder()
+                .conversationId(conversationId)
+                .role(MessageRole.ASSISTANT)
+                .content(assistantContent)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        Message savedAssistantMessage = messageRepository.save(assistantMessage);
+
+        return new MessageExchangeDTO(MessageMapper.toDTO(savedUserMessage),
+                MessageMapper.toDTO(savedAssistantMessage));
     }
 
     @Override

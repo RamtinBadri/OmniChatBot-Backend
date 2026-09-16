@@ -1,6 +1,7 @@
 package dev.ramtin.aiplatform.message;
 
 import dev.ramtin.aiplatform.message.dto.MessageDTO;
+import dev.ramtin.aiplatform.message.dto.MessageExchangeDTO;
 import dev.ramtin.aiplatform.message.dto.SendMessageRequest;
 import dev.ramtin.aiplatform.message.service.MessageService;
 import dev.ramtin.aiplatform.security.CustomUserDetails;
@@ -21,16 +22,19 @@ public class MessageController {
     private final MessageService messageService;
 
     @PostMapping
-    public ResponseEntity<MessageDTO> createMessage(@PathVariable String conversationId,
-            @Valid @RequestBody SendMessageRequest request) {
+    public ResponseEntity<MessageExchangeDTO> createMessage(@PathVariable String conversationId, @Valid @RequestBody SendMessageRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
         String userId = userDetails.getId();
 
-        MessageDTO messageDTO = messageService.createMessage(conversationId, request.getContent(), userId);
+        MessageExchangeDTO messageExchangeDTO = messageService.createMessage(
+                conversationId,
+                request.getContent(),
+                userId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(messageDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(messageExchangeDTO);
     }
 
     @GetMapping("/{messageId}")
