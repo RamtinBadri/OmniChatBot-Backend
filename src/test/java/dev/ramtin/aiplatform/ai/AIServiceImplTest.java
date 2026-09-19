@@ -1,0 +1,177 @@
+package dev.ramtin.aiplatform.ai;
+
+import dev.ramtin.aiplatform.ai.request.AIRequest;
+import dev.ramtin.aiplatform.ai.request.AIRequestRepository;
+import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
+import dev.ramtin.aiplatform.config.AIProperties;
+import dev.ramtin.aiplatform.exception.AIProviderException;
+import dev.ramtin.aiplatform.message.Message;
+import dev.ramtin.aiplatform.message.MessageRepository;
+import dev.ramtin.aiplatform.message.MessageRole;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteChoice;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponseMessage;
+import dev.ramtin.aiplatform.omniroute.service.OmniRouteClient;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class AIServiceImplTest {
+    @Mock
+    private OmniRouteClient omniRouteClient;
+
+    @Mock
+    private AIProperties aiProperties;
+
+    @Mock
+    private MessageRepository messageRepository;
+
+    @Mock
+    private AIRequestRepository aiRequestRepository;
+
+    @InjectMocks
+    private AIServiceImpl aiService;
+
+    @Test
+    void generateResponse_whenProviderSucceeds_updatesAIRequestSuccessfully() {
+
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
+
+        Message userMessage = Message.builder()
+                .id("message123")
+                .conversationId("conversation123")
+                .role(MessageRole.USER)
+                .content("Hello")
+                .build();
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of(userMessage));
+
+        OmniRouteResponseMessage responseMessage =
+                new OmniRouteResponseMessage(
+                        "assistant",
+                        "Hello! How can I help you?"
+                );
+
+        OmniRouteChoice choice = new OmniRouteChoice(0, "stop", responseMessage);
+
+        OmniRouteResponse response =
+                new OmniRouteResponse(
+                        "response123",
+                        "glm-5",
+                        List.of(choice),
+                        null
+                );
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                any(List.class)
+        )).thenReturn(response);
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        String result = aiService.generateResponse("user123", "conversation123");
+
+        assertEquals("Hello! How can I help you?", result);
+
+        ArgumentCaptor<AIRequest> captor = ArgumentCaptor.forClass(AIRequest.class);
+
+        verify(aiRequestRepository, times(3)).save(captor.capture());
+
+        List<AIRequest> savedRequests = captor.getAllValues();
+
+        AIRequest finalRequest =
+                savedRequests.get(savedRequests.size() - 1);
+
+        assertEquals("user123", finalRequest.getUserId());
+
+        assertEquals("conversation123", finalRequest.getConversationId());
+
+        assertEquals("auto/best-coding", finalRequest.getRequestedModel());
+
+        assertEquals("glm-5", finalRequest.getActualModel());
+
+        assertEquals(AIRequestStatus.SUCCESS, finalRequest.getStatus());
+
+        assertNotNull(finalRequest.getRequestTime());
+        assertNotNull(finalRequest.getResponseTime());
+
+        verify(omniRouteClient).sendMessage(eq("auto/best-coding"), any(List.class));
+    }
+
+    @Test
+    void generateResponse_whenProviderFails_marksAIRequestAsProviderError() {
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                any(List.class)
+        )).thenThrow(
+                new AIProviderException("AI provider request failed")
+        );
+
+        assertThrows(
+                AIProviderException.class,
+                () -> aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                )
+        );
+
+        ArgumentCaptor<AIRequest> captor =
+                ArgumentCaptor.forClass(AIRequest.class);
+
+        verify(aiRequestRepository, times(3))
+                .save(captor.capture());
+
+        List<AIRequest> savedRequests =
+                captor.getAllValues();
+
+        AIRequest finalRequest =
+                savedRequests.get(savedRequests.size() - 1);
+
+        assertEquals(
+                "user123",
+                finalRequest.getUserId()
+        );
+
+        assertEquals(
+                "conversation123",
+                finalRequest.getConversationId()
+        );
+
+        assertEquals(
+                "auto/best-coding",
+                finalRequest.getRequestedModel()
+        );
+
+        assertEquals(
+                AIRequestStatus.PROVIDER_ERROR,
+                finalRequest.getStatus()
+        );
+
+        assertNotNull(finalRequest.getRequestTime());
+        assertNotNull(finalRequest.getResponseTime());
+    }
+}
