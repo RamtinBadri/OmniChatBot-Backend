@@ -15,11 +15,13 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
+import dev.ramtin.aiplatform.ai.AIService;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -30,6 +32,9 @@ class MessageServiceImplTest {
 
     @Mock
     private ConversationRepository conversationRepository;
+
+    @Mock
+    private AIService aiService;
 
     @InjectMocks
     private MessageServiceImpl messageService;
@@ -112,17 +117,30 @@ class MessageServiceImplTest {
     }
 
     @Test
-    void createMessage_whenUserOwnsConversation_createsAndReturnsMessageDTO() {
-        Conversation conversation = Conversation.builder().id("conversation123").userId("user123").build();
+    void createMessage_whenUserOwnsConversation_createsAndReturnsMessageExchangeDTO() {
+        Conversation conversation = Conversation.builder()
+                .id("conversation123")
+                .userId("user123")
+                .build();
 
-        when(conversationRepository.findById("conversation123")).thenReturn(Optional.of(conversation));
+        when(conversationRepository.findById("conversation123"))
+                .thenReturn(Optional.of(conversation));
 
         when(messageRepository.save(org.mockito.ArgumentMatchers.any(Message.class)))
                 .thenAnswer(invocation -> {
                     Message message = invocation.getArgument(0);
-                    message.setId("message123");
+
+                    if (message.getRole() == MessageRole.USER) {
+                        message.setId("userMessage123");
+                    } else {
+                        message.setId("assistantMessage123");
+                    }
+
                     return message;
                 });
+
+        when(aiService.generateResponse("user123", "conversation123"))
+                .thenReturn("Hi! How can I help you?");
 
         var result = messageService.createMessage(
                 "conversation123",
@@ -130,14 +148,30 @@ class MessageServiceImplTest {
                 "user123"
         );
 
-        assertEquals("message123", result.getId());
-        assertEquals("conversation123", result.getConversationId());
-        assertEquals(MessageRole.USER, result.getRole());
-        assertEquals("Hello", result.getContent());
-        assertNotNull(result.getCreatedAt());
+        assertNotNull(result);
+
+        assertNotNull(result.getUserMessage());
+        assertEquals("userMessage123", result.getUserMessage().getId());
+        assertEquals("conversation123", result.getUserMessage().getConversationId());
+        assertEquals(MessageRole.USER, result.getUserMessage().getRole());
+        assertEquals("Hello", result.getUserMessage().getContent());
+        assertNotNull(result.getUserMessage().getCreatedAt());
+
+        assertNotNull(result.getAssistantMessage());
+        assertEquals("assistantMessage123", result.getAssistantMessage().getId());
+        assertEquals("conversation123", result.getAssistantMessage().getConversationId());
+        assertEquals(MessageRole.ASSISTANT, result.getAssistantMessage().getRole());
+        assertEquals("Hi! How can I help you?", result.getAssistantMessage().getContent());
+        assertNotNull(result.getAssistantMessage().getCreatedAt());
 
         verify(conversationRepository).findById("conversation123");
-        verify(messageRepository).save(
+
+        verify(aiService).generateResponse(
+                "user123",
+                "conversation123"
+        );
+
+        verify(messageRepository, times(2)).save(
                 org.mockito.ArgumentMatchers.any(Message.class)
         );
     }

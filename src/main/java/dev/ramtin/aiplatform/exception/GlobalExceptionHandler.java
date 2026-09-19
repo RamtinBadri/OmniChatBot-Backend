@@ -73,4 +73,15 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
     }
+
+    @ExceptionHandler(AIProviderException.class)
+    public ResponseEntity<ErrorResponse> handleAIProviderException(AIProviderException exception) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(new ErrorResponse(
+                        HttpStatus.BAD_GATEWAY.value(),
+                        "AI provider request failed",
+                        LocalDateTime.now()
+                ));
+    }
 }
