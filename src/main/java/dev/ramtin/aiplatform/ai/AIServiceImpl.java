@@ -9,7 +9,10 @@ import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageRepository;
 import dev.ramtin.aiplatform.omniroute.request.OmniRouteMessage;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteUsage;
 import dev.ramtin.aiplatform.omniroute.service.OmniRouteClient;
+import dev.ramtin.aiplatform.usage_record.UsageRecord;
+import dev.ramtin.aiplatform.usage_record.UsageRecordRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,13 +24,16 @@ public class AIServiceImpl implements AIService {
     private final AIProperties aiProperties;
     private final MessageRepository messageRepository;
     private final AIRequestRepository aiRequestRepository;
+    private final UsageRecordRepository usageRecordRepository;
 
     public AIServiceImpl(OmniRouteClient omniRouteClient, AIProperties aiProperties,
-                         MessageRepository messageRepository, AIRequestRepository aiRequestRepository) {
+                         MessageRepository messageRepository, AIRequestRepository aiRequestRepository,
+                         UsageRecordRepository usageRecordRepository) {
         this.omniRouteClient = omniRouteClient;
         this.aiProperties = aiProperties;
         this.messageRepository = messageRepository;
         this.aiRequestRepository = aiRequestRepository;
+        this.usageRecordRepository = usageRecordRepository;
     }
 
     @Override
@@ -63,6 +69,21 @@ public class AIServiceImpl implements AIService {
             aiRequest.setResponseTime(LocalDateTime.now());
 
             aiRequestRepository.save(aiRequest);
+
+            OmniRouteUsage usage = response.getUsage();
+
+            UsageRecord usageRecord = UsageRecord.builder()
+                    .aiRequestId(aiRequest.getId())
+                    .userId(userId)
+                    .conversationId(conversationId)
+                    .model(response.getModel())
+                    .inputTokens(usage.getPromptTokens())
+                    .outputTokens(usage.getCompletionTokens())
+                    .totalTokens(usage.getTotalTokens())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            usageRecordRepository.save(usageRecord);
 
             return response.getChoices().get(0).getMessage().getContent();
         } catch (AIProviderException exception) {

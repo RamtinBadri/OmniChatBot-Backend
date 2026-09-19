@@ -11,7 +11,10 @@ import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteChoice;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponseMessage;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteUsage;
 import dev.ramtin.aiplatform.omniroute.service.OmniRouteClient;
+import dev.ramtin.aiplatform.usage_record.UsageRecord;
+import dev.ramtin.aiplatform.usage_record.UsageRecordRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -39,12 +42,14 @@ class AIServiceImplTest {
     @Mock
     private AIRequestRepository aiRequestRepository;
 
+    @Mock
+    private UsageRecordRepository usageRecordRepository;
+
     @InjectMocks
     private AIServiceImpl aiService;
 
     @Test
     void generateResponse_whenProviderSucceeds_updatesAIRequestSuccessfully() {
-
         when(aiProperties.getDefaultModel())
                 .thenReturn("auto/best-coding");
 
@@ -67,12 +72,17 @@ class AIServiceImplTest {
 
         OmniRouteChoice choice = new OmniRouteChoice(0, "stop", responseMessage);
 
+        OmniRouteUsage usage = new OmniRouteUsage(
+                        100,
+                        20,
+                        120);
+
         OmniRouteResponse response =
                 new OmniRouteResponse(
                         "response123",
                         "glm-5",
                         List.of(choice),
-                        null
+                        usage
                 );
 
         when(omniRouteClient.sendMessage(
@@ -81,6 +91,17 @@ class AIServiceImplTest {
         )).thenReturn(response);
 
         when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation -> {
+                    AIRequest request = invocation.getArgument(0);
+
+                    if (request.getId() == null) {
+                        request.setId("ai-request-123");
+                    }
+
+                    return request;
+                });
+
+        when(usageRecordRepository.save(any(UsageRecord.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         String result = aiService.generateResponse("user123", "conversation123");
@@ -93,8 +114,7 @@ class AIServiceImplTest {
 
         List<AIRequest> savedRequests = captor.getAllValues();
 
-        AIRequest finalRequest =
-                savedRequests.get(savedRequests.size() - 1);
+        AIRequest finalRequest = savedRequests.get(savedRequests.size() - 1);
 
         assertEquals("user123", finalRequest.getUserId());
 
@@ -110,6 +130,26 @@ class AIServiceImplTest {
         assertNotNull(finalRequest.getResponseTime());
 
         verify(omniRouteClient).sendMessage(eq("auto/best-coding"), any(List.class));
+
+        ArgumentCaptor<UsageRecord> usageCaptor = ArgumentCaptor.forClass(UsageRecord.class);
+
+        verify(usageRecordRepository).save(usageCaptor.capture());
+
+        UsageRecord savedUsage = usageCaptor.getValue();
+
+        assertEquals("user123", savedUsage.getUserId());
+        assertEquals("conversation123", savedUsage.getConversationId());
+        assertEquals("glm-5", savedUsage.getModel());
+
+        assertEquals(100, savedUsage.getInputTokens());
+        assertEquals(20, savedUsage.getOutputTokens());
+        assertEquals(120, savedUsage.getTotalTokens());
+
+        assertNotNull(savedUsage.getAiRequestId());
+        assertNotNull(savedUsage.getTimestamp());
+
+        assertNull(savedUsage.getProviderCost());
+        assertNull(savedUsage.getChargedAmount());
     }
 
     @Test
@@ -173,5 +213,7 @@ class AIServiceImplTest {
 
         assertNotNull(finalRequest.getRequestTime());
         assertNotNull(finalRequest.getResponseTime());
+
+        verify(usageRecordRepository, never()).save(any(UsageRecord.class));
     }
 }
