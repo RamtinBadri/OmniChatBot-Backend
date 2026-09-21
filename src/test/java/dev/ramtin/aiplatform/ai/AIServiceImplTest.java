@@ -5,9 +5,13 @@ import dev.ramtin.aiplatform.ai.request.AIRequestRepository;
 import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
 import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.exception.AIProviderException;
+import dev.ramtin.aiplatform.exception.ModelPricingNotFoundException;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
+import dev.ramtin.aiplatform.model_pricing.CostCalculator;
+import dev.ramtin.aiplatform.model_pricing.ModelPricing;
+import dev.ramtin.aiplatform.model_pricing.ModelPricingRepository;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteChoice;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponseMessage;
@@ -20,9 +24,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -45,13 +52,28 @@ class AIServiceImplTest {
     @Mock
     private UsageRecordRepository usageRecordRepository;
 
+    @Mock
+    private ModelPricingRepository modelPricingRepository;
+
+    @Spy
+    private CostCalculator costCalculator;
+
     @InjectMocks
     private AIServiceImpl aiService;
 
     @Test
     void generateResponse_whenProviderSucceeds_updatesAIRequestSuccessfully() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
+        when(aiProperties.getDefaultModel()).thenReturn("auto/best-coding");
+
+        ModelPricing pricing = ModelPricing.builder()
+                .model("glm-5")
+                .inputPricePerMillion(new BigDecimal("0.50"))
+                .outputPricePerMillion(new BigDecimal("2.00"))
+                .active(true)
+                .build();
+
+        when(modelPricingRepository.findByModelAndActiveTrue("glm-5"))
+                .thenReturn(java.util.Optional.of(pricing));
 
         Message userMessage = Message.builder()
                 .id("message123")
@@ -148,8 +170,9 @@ class AIServiceImplTest {
         assertNotNull(savedUsage.getAiRequestId());
         assertNotNull(savedUsage.getTimestamp());
 
-        assertNull(savedUsage.getProviderCost());
-        assertNull(savedUsage.getChargedAmount());
+        assertEquals(0, new BigDecimal("0.00009").compareTo(savedUsage.getProviderCost()));
+
+        assertEquals(0, new BigDecimal("0.00009").compareTo(savedUsage.getChargedAmount()));
     }
 
     @Test
@@ -215,5 +238,84 @@ class AIServiceImplTest {
         assertNotNull(finalRequest.getResponseTime());
 
         verify(usageRecordRepository, never()).save(any(UsageRecord.class));
+    }
+
+    @Test
+    void generateResponse_shouldFailWhenModelPricingDoesNotExist() {
+        when(aiProperties.getDefaultModel()).thenReturn("auto/best-coding");
+
+        OmniRouteUsage usage = new OmniRouteUsage(100, 20, 120);
+
+        OmniRouteResponse response = new OmniRouteResponse(
+                "response-123",
+                "glm-5",
+                List.of(
+                        new OmniRouteChoice(
+                                0,
+                                "stop",
+                                new OmniRouteResponseMessage(
+                                        "assistant",
+                                        "Hello"
+                                )
+                        )
+                ),
+                usage
+        );
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                anyList()
+        )).thenReturn(response);
+
+        when(modelPricingRepository.findByModelAndActiveTrue("glm-5"))
+                .thenReturn(Optional.empty());
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation -> {
+                    AIRequest request = invocation.getArgument(0);
+
+                    if (request.getId() == null) {
+                        request.setId("ai-request-123");
+                    }
+
+                    return request;
+                });
+
+        assertThrows(
+                ModelPricingNotFoundException.class,
+                () -> aiService.generateResponse(
+                        "user-123",
+                        "conversation-123"
+                )
+        );
+
+        verify(usageRecordRepository, never())
+                .save(any(UsageRecord.class));
+
+        verify(aiRequestRepository, never())
+                .save(argThat(request ->
+                        request.getStatus() == AIRequestStatus.SUCCESS
+                ));
+    }
+
+    private static OmniRouteResponse getOmniRouteResponse() {
+        OmniRouteUsage usage = new OmniRouteUsage(100, 20, 120);
+
+        OmniRouteResponse response = new OmniRouteResponse(
+                "response-123",
+                "glm-5",
+                List.of(
+                        new OmniRouteChoice(
+                                0,
+                                "stop",
+                                new OmniRouteResponseMessage(
+                                        "assistant",
+                                        "Hello"
+                                )
+                        )
+                ),
+                usage
+        );
+        return response;
     }
 }

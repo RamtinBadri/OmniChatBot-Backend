@@ -84,4 +84,13 @@ public class GlobalExceptionHandler {
                         LocalDateTime.now()
                 ));
     }
+
+    @ExceptionHandler(ModelPricingNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleModelPricingNotFoundException(ModelPricingNotFoundException exception) {
+        return ResponseEntity.status(422).body(new ErrorResponse(
+                        422,
+                        exception.getMessage(),
+                        LocalDateTime.now()
+                ));
+    }
 }
