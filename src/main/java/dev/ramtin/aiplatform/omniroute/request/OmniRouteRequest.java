@@ -13,6 +13,5 @@ import java.util.List;
 @AllArgsConstructor
 public class OmniRouteRequest {
     private String model;
-
     private List<OmniRouteMessage> messages;
 }

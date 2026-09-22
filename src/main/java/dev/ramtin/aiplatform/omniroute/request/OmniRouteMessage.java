@@ -11,6 +11,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class OmniRouteMessage {
     private String role;
-
     private String content;
 }
