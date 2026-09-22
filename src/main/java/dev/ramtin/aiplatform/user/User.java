@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 public class User {
     @Id
     private String id;
+    private String balanceId;
+    private CreditSource creditSource;
     @Indexed(name = "username_unique", unique = true)
     private String username;
     private String password;

@@ -5,11 +5,13 @@ import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.user.*;
 import dev.ramtin.aiplatform.user.dto.UpdateUserRequest;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
+import dev.ramtin.aiplatform.user_balance.UserBalance;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
@@ -55,6 +57,17 @@ public class UserServiceImpl implements UserService {
 
         user.setUserRole(role);
         user.setUpdatedAt(LocalDateTime.now());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateCreditSource(String userId, CreditSource creditSource) {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+
+        user.setCreditSource(creditSource);
+        user.setUpdatedAt(LocalDateTime.now());
+
         userRepository.save(user);
     }
 }

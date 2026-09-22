@@ -138,4 +138,41 @@ class UserServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> userService.updateUserRole("user123", UserRole.ADMIN));
         verify(userRepository).findById("user123");
     }
+
+    @Test
+    void shouldUpdateCreditSourceSuccessfully() {
+        User user = User.builder()
+                .id("user-1")
+                .creditSource(CreditSource.SUBSCRIPTION)
+                .build();
+
+        when(userRepository.findById("user-1"))
+                .thenReturn(Optional.of(user));
+
+        userService.updateCreditSource(
+                "user-1",
+                CreditSource.PAY_AS_YOU_GO
+        );
+
+        assertEquals(
+                CreditSource.PAY_AS_YOU_GO,
+                user.getCreditSource()
+        );
+
+        verify(userRepository).save(user);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenUpdatingCreditSourceForNonExistingUser() {
+        when(userRepository.findById("user-1"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> userService.updateCreditSource(
+                        "user-1",
+                        CreditSource.PAY_AS_YOU_GO
+                )
+        );
+    }
 }

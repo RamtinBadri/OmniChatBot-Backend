@@ -187,4 +187,72 @@ class SubscriptionServiceImplTest {
 
         verify(subscriptionRepository).save(subscription);
     }
+
+    @Test
+    void shouldConsumeSubscriptionCreditSuccessfully() {
+        Subscription subscription = Subscription.builder()
+                .id("subscription-1")
+                .userId("user-1")
+                .status(SubscriptionStatus.ACTIVE)
+                .remainingCredit(BigDecimal.valueOf(20))
+                .endDate(LocalDateTime.now().plusDays(10))
+                .build();
+
+        when(subscriptionRepository.findByUserIdAndStatus(
+                "user-1",
+                SubscriptionStatus.ACTIVE
+        )).thenReturn(Optional.of(subscription));
+
+        subscriptionService.consumeCredit(
+                "user-1",
+                BigDecimal.valueOf(5)
+        );
+
+        assertEquals(
+                BigDecimal.valueOf(15),
+                subscription.getRemainingCredit()
+        );
+
+        verify(subscriptionRepository).save(subscription);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenSubscriptionCreditIsInsufficient() {
+        Subscription subscription = Subscription.builder()
+                .id("subscription-1")
+                .userId("user-1")
+                .status(SubscriptionStatus.ACTIVE)
+                .remainingCredit(BigDecimal.valueOf(3))
+                .endDate(LocalDateTime.now().plusDays(10))
+                .build();
+
+        when(subscriptionRepository.findByUserIdAndStatus(
+                "user-1",
+                SubscriptionStatus.ACTIVE
+        )).thenReturn(Optional.of(subscription));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> subscriptionService.consumeCredit(
+                        "user-1",
+                        BigDecimal.valueOf(5)
+                )
+        );
+    }
+
+    @Test
+    void shouldThrowExceptionWhenActiveSubscriptionDoesNotExist() {
+        when(subscriptionRepository.findByUserIdAndStatus(
+                "user-1",
+                SubscriptionStatus.ACTIVE
+        )).thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> subscriptionService.consumeCredit(
+                        "user-1",
+                        BigDecimal.valueOf(5)
+                )
+        );
+    }
 }

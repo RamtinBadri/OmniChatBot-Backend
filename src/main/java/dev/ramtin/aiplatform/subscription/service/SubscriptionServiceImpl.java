@@ -8,6 +8,7 @@ import dev.ramtin.aiplatform.subscription.SubscriptionRepository;
 import dev.ramtin.aiplatform.subscription.SubscriptionStatus;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
@@ -23,11 +24,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public Subscription createSubscription(String userId, String planId) {
         Plan plan = planRepository.findById(planId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Plan not found with id: " + planId
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Plan not found with id: " + planId));
 
         if (!plan.isActive()) {
             throw new IllegalStateException("Cannot create subscription for inactive plan");
@@ -35,9 +32,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         LocalDateTime startDate = LocalDateTime.now();
 
-        LocalDateTime endDate = startDate.plusDays(
-                plan.getDuration()
-        );
+        LocalDateTime endDate = startDate.plusDays(plan.getDuration());
 
         Subscription subscription = Subscription.builder()
                 .userId(userId)
@@ -55,19 +50,34 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Override
     public Subscription getSubscriptionById(String subscriptionId) {
         return subscriptionRepository.findById(subscriptionId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Subscription not found with id: "
-                                        + subscriptionId
-                        )
-                );
+                .orElseThrow(() -> new ResourceNotFoundException("Subscription not found with id: " + subscriptionId));
     }
 
     @Override
     public void cancelSubscription(String subscriptionId) {
         Subscription subscription = getSubscriptionById(subscriptionId);
-
         subscription.setStatus(SubscriptionStatus.CANCELLED);
+        subscriptionRepository.save(subscription);
+    }
+
+    @Override
+    public void consumeCredit(String userId, BigDecimal amount) {
+        Subscription subscription = subscriptionRepository
+                .findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Active subscription not found"));
+
+        if (subscription.getEndDate().isBefore(LocalDateTime.now())) {
+            subscription.setStatus(SubscriptionStatus.EXPIRED);
+            subscriptionRepository.save(subscription);
+
+            throw new IllegalStateException("Subscription has expired");
+        }
+
+        if (subscription.getRemainingCredit().compareTo(amount) < 0) {
+            throw new IllegalStateException("Insufficient subscription credit");
+        }
+
+        subscription.setRemainingCredit(subscription.getRemainingCredit().subtract(amount));
 
         subscriptionRepository.save(subscription);
     }
