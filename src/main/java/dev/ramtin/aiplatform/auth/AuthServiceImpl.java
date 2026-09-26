@@ -8,6 +8,8 @@ import dev.ramtin.aiplatform.user.UserRole;
 import dev.ramtin.aiplatform.user.UserStatus;
 import dev.ramtin.aiplatform.user.dto.LoginRequest;
 import dev.ramtin.aiplatform.user.dto.RegisterRequest;
+import dev.ramtin.aiplatform.user_balance.UserBalance;
+import dev.ramtin.aiplatform.user_balance.service.UserBalanceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -23,6 +25,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserBalanceService userBalanceService;
 
     @Override
     public void register(RegisterRequest request) {
@@ -48,7 +51,12 @@ public class AuthServiceImpl implements AuthService {
                 .updatedAt(now)
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        UserBalance balance = userBalanceService.createBalance(savedUser.getId());
+
+        savedUser.setBalanceId(balance.getId());
+        userRepository.save(savedUser);
     }
 
     @Override

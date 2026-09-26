@@ -6,13 +6,12 @@ import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
 import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.credit.CreditSourceHandler;
 import dev.ramtin.aiplatform.exception.AIProviderException;
-import dev.ramtin.aiplatform.exception.ModelPricingNotFoundException;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.model_pricing.CostCalculator;
 import dev.ramtin.aiplatform.model_pricing.ModelPricing;
-import dev.ramtin.aiplatform.model_pricing.ModelPricingRepository;
+import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteChoice;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponseMessage;
@@ -59,7 +58,7 @@ class AIServiceImplTest {
     private UsageRecordRepository usageRecordRepository;
 
     @Mock
-    private ModelPricingRepository modelPricingRepository;
+    private ModelPricingService modelPricingService;
 
     @Mock
     private UserRepository userRepository;
@@ -81,7 +80,7 @@ class AIServiceImplTest {
                 messageRepository,
                 aiRequestRepository,
                 usageRecordRepository,
-                modelPricingRepository,
+                modelPricingService,
                 costCalculator,
                 userRepository,
                 List.of(creditSourceHandler)
@@ -90,7 +89,8 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenProviderSucceeds_updatesAIRequestSuccessfully() {
-        when(aiProperties.getDefaultModel()).thenReturn("auto/best-coding");
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
 
         ModelPricing pricing = ModelPricing.builder()
                 .model("glm-5")
@@ -99,7 +99,8 @@ class AIServiceImplTest {
                 .active(true)
                 .build();
 
-        when(modelPricingRepository.findByModelAndActiveTrue("glm-5")).thenReturn(Optional.of(pricing));
+        when(modelPricingService.getPricing("glm-5"))
+                .thenReturn(pricing);
 
         Message userMessage = Message.builder()
                 .id("message123")
@@ -237,6 +238,9 @@ class AIServiceImplTest {
                         any(List.class)
                 );
 
+        verify(modelPricingService)
+                .getPricing("glm-5");
+
         ArgumentCaptor<UsageRecord> usageCaptor =
                 ArgumentCaptor.forClass(
                         UsageRecord.class
@@ -313,7 +317,8 @@ class AIServiceImplTest {
                         eq("user123"),
                         argThat(amount ->
                                 amount.compareTo(
-                                        new BigDecimal("0.00009")) == 0
+                                        new BigDecimal("0.00009")
+                                ) == 0
                         )
                 );
     }
@@ -323,8 +328,9 @@ class AIServiceImplTest {
         when(aiProperties.getDefaultModel())
                 .thenReturn("auto/best-coding");
 
-        when(messageRepository.findByConversationIdOrderByCreatedAtAsc("conversation123"))
-                .thenReturn(List.of());
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
 
         when(aiRequestRepository.save(any(AIRequest.class)))
                 .thenAnswer(invocation ->
@@ -348,9 +354,11 @@ class AIServiceImplTest {
                 )
         );
 
-        ArgumentCaptor<AIRequest> captor = ArgumentCaptor.forClass(AIRequest.class);
+        ArgumentCaptor<AIRequest> captor =
+                ArgumentCaptor.forClass(AIRequest.class);
 
-        verify(aiRequestRepository, times(3)).save(captor.capture());
+        verify(aiRequestRepository, times(3))
+                .save(captor.capture());
 
         List<AIRequest> savedRequests =
                 captor.getAllValues();
@@ -391,6 +399,9 @@ class AIServiceImplTest {
         verify(usageRecordRepository, never())
                 .save(any(UsageRecord.class));
 
+        verify(modelPricingService, never())
+                .getPricing(any());
+
         verify(userRepository, never())
                 .findById(any());
 
@@ -399,16 +410,23 @@ class AIServiceImplTest {
     }
 
     @Test
-    void generateResponse_shouldFailWhenModelPricingDoesNotExist() {
+    void generateResponse_whenPricingServiceReturnsDefaultPricing_succeeds() {
         when(aiProperties.getDefaultModel())
                 .thenReturn("auto/best-coding");
 
-        OmniRouteUsage usage =
-                new OmniRouteUsage(
-                        100,
-                        20,
-                        120
-                );
+        ModelPricing defaultPricing = ModelPricing.builder()
+                .model("glm-5")
+                .inputPricePerMillion(new BigDecimal("0.50"))
+                .outputPricePerMillion(new BigDecimal("2.00"))
+                .active(true)
+                .build();
+
+        when(modelPricingService.getPricing("glm-5"))
+                .thenReturn(defaultPricing);
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
 
         OmniRouteResponse response =
                 new OmniRouteResponse(
@@ -424,17 +442,17 @@ class AIServiceImplTest {
                                         )
                                 )
                         ),
-                        usage
+                        new OmniRouteUsage(
+                                100,
+                                20,
+                                120
+                        )
                 );
 
         when(omniRouteClient.sendMessage(
                 eq("auto/best-coding"),
                 anyList()
         )).thenReturn(response);
-
-        when(modelPricingRepository
-                .findByModelAndActiveTrue("glm-5"))
-                .thenReturn(Optional.empty());
 
         when(aiRequestRepository.save(any(AIRequest.class)))
                 .thenAnswer(invocation -> {
@@ -448,24 +466,48 @@ class AIServiceImplTest {
                     return request;
                 });
 
-        assertThrows(
-                ModelPricingNotFoundException.class,
-                () -> aiService.generateResponse(
-                        "user-123",
-                        "conversation-123"
-                )
+        when(usageRecordRepository.save(any(UsageRecord.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        User user = User.builder()
+                .id("user123")
+                .creditSource(CreditSource.SUBSCRIPTION)
+                .build();
+
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(user));
+
+        when(creditSourceHandler.getCreditSource())
+                .thenReturn(CreditSource.SUBSCRIPTION);
+
+        String result =
+                aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                );
+
+        assertEquals(
+                "Hello",
+                result
         );
 
-        verify(usageRecordRepository, never()).save(any(UsageRecord.class));
+        verify(modelPricingService)
+                .getPricing("glm-5");
 
-        verify(aiRequestRepository, never())
-                .save(argThat(request ->
-                        request.getStatus() == AIRequestStatus.SUCCESS
-                ));
+        verify(usageRecordRepository)
+                .save(any(UsageRecord.class));
 
-        verify(userRepository, never()).findById(any());
-
-        verify(creditSourceHandler, never()).consume(any(), any());
+        verify(creditSourceHandler)
+                .consume(
+                        eq("user123"),
+                        argThat(amount ->
+                                amount.compareTo(
+                                        new BigDecimal("0.00009")
+                                ) == 0
+                        )
+                );
     }
 
     @Test
@@ -480,8 +522,8 @@ class AIServiceImplTest {
                 .active(true)
                 .build();
 
-        when(modelPricingRepository.findByModelAndActiveTrue("glm-5"))
-                .thenReturn(Optional.of(pricing));
+        when(modelPricingService.getPricing("glm-5"))
+                .thenReturn(pricing);
 
         Message userMessage = Message.builder()
                 .id("message123")
@@ -549,16 +591,25 @@ class AIServiceImplTest {
                 .creditSource(CreditSource.PAY_AS_YOU_GO)
                 .build();
 
-        when(userRepository.findById("user123")).thenReturn(Optional.of(user));
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(user));
 
-        when(creditSourceHandler.getCreditSource()).thenReturn(CreditSource.PAY_AS_YOU_GO);
+        when(creditSourceHandler.getCreditSource())
+                .thenReturn(CreditSource.PAY_AS_YOU_GO);
 
-        String result = aiService.generateResponse("user123", "conversation123");
+        String result =
+                aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                );
 
         assertEquals(
                 "Hello! How can I help you?",
                 result
         );
+
+        verify(modelPricingService)
+                .getPricing("glm-5");
 
         verify(userRepository)
                 .findById("user123");
@@ -571,7 +622,8 @@ class AIServiceImplTest {
                         eq("user123"),
                         argThat(amount ->
                                 amount.compareTo(
-                                        new BigDecimal("0.00009")) == 0
+                                        new BigDecimal("0.00009")
+                                ) == 0
                         )
                 );
     }

@@ -6,6 +6,10 @@ import dev.ramtin.aiplatform.plan.PlanRepository;
 import dev.ramtin.aiplatform.subscription.Subscription;
 import dev.ramtin.aiplatform.subscription.SubscriptionRepository;
 import dev.ramtin.aiplatform.subscription.SubscriptionStatus;
+import dev.ramtin.aiplatform.transaction.Transaction;
+import dev.ramtin.aiplatform.transaction.TransactionStatus;
+import dev.ramtin.aiplatform.transaction.TransactionType;
+import dev.ramtin.aiplatform.transaction.service.TransactionService;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -15,10 +19,13 @@ import java.time.LocalDateTime;
 public class SubscriptionServiceImpl implements SubscriptionService {
     private final SubscriptionRepository subscriptionRepository;
     private final PlanRepository planRepository;
+    private final TransactionService transactionService;
 
-    public SubscriptionServiceImpl(SubscriptionRepository subscriptionRepository, PlanRepository planRepository) {
+    public SubscriptionServiceImpl(SubscriptionRepository subscriptionRepository, PlanRepository planRepository,
+                                   TransactionService transactionService) {
         this.subscriptionRepository = subscriptionRepository;
         this.planRepository = planRepository;
+        this.transactionService = transactionService;
     }
 
     @Override
@@ -44,7 +51,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .remainingCredit(plan.getCreditLimit())
                 .build();
 
-        return subscriptionRepository.save(subscription);
+        subscription = subscriptionRepository.save(subscription);
+
+        Transaction transaction = transactionService.createTransaction(userId, TransactionType.SUBSCRIPTION_PURCHASE,
+                plan.getPrice(), "USD", "subscription" + subscription.getId());
+
+        transactionService.updateStatus(transaction.getId(), TransactionStatus.SUCCESS);
+        return subscription;
     }
 
     @Override

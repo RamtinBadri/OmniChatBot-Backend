@@ -36,4 +36,8 @@ public class CustomUserDetails implements UserDetails {
     public @NonNull String getUsername() {
         return username;
     }
+
+    public String getUserId() {
+        return id;
+    }
 }

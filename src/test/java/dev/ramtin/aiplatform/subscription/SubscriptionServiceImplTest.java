@@ -4,6 +4,10 @@ import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.plan.Plan;
 import dev.ramtin.aiplatform.plan.PlanRepository;
 import dev.ramtin.aiplatform.subscription.service.SubscriptionServiceImpl;
+import dev.ramtin.aiplatform.transaction.Transaction;
+import dev.ramtin.aiplatform.transaction.TransactionStatus;
+import dev.ramtin.aiplatform.transaction.TransactionType;
+import dev.ramtin.aiplatform.transaction.service.TransactionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -11,22 +15,36 @@ import org.mockito.MockitoAnnotations;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 class SubscriptionServiceImplTest {
+
     @Mock
     private SubscriptionRepository subscriptionRepository;
+
     @Mock
     private PlanRepository planRepository;
+
+    @Mock
+    private TransactionService transactionService;
+
     private SubscriptionServiceImpl subscriptionService;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        subscriptionService = new SubscriptionServiceImpl(subscriptionRepository, planRepository);
+
+        subscriptionService =
+                new SubscriptionServiceImpl(
+                        subscriptionRepository,
+                        planRepository,
+                        transactionService
+                );
     }
 
     @Test
@@ -41,10 +59,33 @@ class SubscriptionServiceImplTest {
                 .build();
 
         when(planRepository.findById("plan-1"))
-                .thenReturn(Optional.of(plan));
+                .thenReturn(java.util.Optional.of(plan));
 
         when(subscriptionRepository.save(any(Subscription.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Transaction transaction = Transaction.builder()
+                .id("transaction-1")
+                .userId("user-1")
+                .type(TransactionType.SUBSCRIPTION_PURCHASE)
+                .amount(BigDecimal.TEN)
+                .currency("USD")
+                .status(TransactionStatus.PENDING)
+                .reference("subscription:test")
+                .build();
+
+        when(transactionService.createTransaction(
+                eq("user-1"),
+                eq(TransactionType.SUBSCRIPTION_PURCHASE),
+                eq(BigDecimal.TEN),
+                eq("USD"),
+                anyString()
+        )).thenReturn(transaction);
+
+        when(transactionService.updateStatus(
+                eq("transaction-1"),
+                eq(TransactionStatus.SUCCESS)
+        )).thenReturn(transaction);
 
         LocalDateTime before = LocalDateTime.now();
 
@@ -58,8 +99,15 @@ class SubscriptionServiceImplTest {
 
         assertNotNull(result);
 
-        assertEquals("user-1", result.getUserId());
-        assertEquals("plan-1", result.getPlanId());
+        assertEquals(
+                "user-1",
+                result.getUserId()
+        );
+
+        assertEquals(
+                "plan-1",
+                result.getPlanId()
+        );
 
         assertEquals(
                 BigDecimal.TEN,
@@ -77,6 +125,7 @@ class SubscriptionServiceImplTest {
         );
 
         assertNotNull(result.getStartDate());
+
         assertNotNull(result.getEndDate());
 
         assertTrue(
@@ -89,7 +138,23 @@ class SubscriptionServiceImplTest {
                 result.getEndDate()
         );
 
-        verify(subscriptionRepository).save(any(Subscription.class));
+        verify(subscriptionRepository)
+                .save(any(Subscription.class));
+
+        verify(transactionService)
+                .createTransaction(
+                        eq("user-1"),
+                        eq(TransactionType.SUBSCRIPTION_PURCHASE),
+                        eq(BigDecimal.TEN),
+                        eq("USD"),
+                        anyString()
+                );
+
+        verify(transactionService)
+                .updateStatus(
+                        eq("transaction-1"),
+                        eq(TransactionStatus.SUCCESS)
+                );
     }
 
     @Test
@@ -104,7 +169,7 @@ class SubscriptionServiceImplTest {
                 .build();
 
         when(planRepository.findById("plan-1"))
-                .thenReturn(Optional.of(plan));
+                .thenReturn(java.util.Optional.of(plan));
 
         assertThrows(
                 IllegalStateException.class,
@@ -116,12 +181,21 @@ class SubscriptionServiceImplTest {
 
         verify(subscriptionRepository, never())
                 .save(any());
+
+        verify(transactionService, never())
+                .createTransaction(
+                        anyString(),
+                        any(TransactionType.class),
+                        any(BigDecimal.class),
+                        anyString(),
+                        anyString()
+                );
     }
 
     @Test
     void shouldThrowExceptionWhenPlanDoesNotExist() {
         when(planRepository.findById("plan-1"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -133,6 +207,15 @@ class SubscriptionServiceImplTest {
 
         verify(subscriptionRepository, never())
                 .save(any());
+
+        verify(transactionService, never())
+                .createTransaction(
+                        anyString(),
+                        any(TransactionType.class),
+                        any(BigDecimal.class),
+                        anyString(),
+                        anyString()
+                );
     }
 
     @Test
@@ -146,19 +229,26 @@ class SubscriptionServiceImplTest {
                 .build();
 
         when(subscriptionRepository.findById("sub-1"))
-                .thenReturn(Optional.of(subscription));
+                .thenReturn(java.util.Optional.of(subscription));
 
         Subscription result =
                 subscriptionService.getSubscriptionById("sub-1");
 
-        assertEquals("sub-1", result.getId());
-        assertEquals("user-1", result.getUserId());
+        assertEquals(
+                "sub-1",
+                result.getId()
+        );
+
+        assertEquals(
+                "user-1",
+                result.getUserId()
+        );
     }
 
     @Test
     void shouldThrowExceptionWhenSubscriptionDoesNotExist() {
         when(subscriptionRepository.findById("sub-1"))
-                .thenReturn(Optional.empty());
+                .thenReturn(java.util.Optional.empty());
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -176,7 +266,8 @@ class SubscriptionServiceImplTest {
                 .remainingCredit(BigDecimal.valueOf(5))
                 .build();
 
-        when(subscriptionRepository.findById("sub-1")).thenReturn(Optional.of(subscription));
+        when(subscriptionRepository.findById("sub-1"))
+                .thenReturn(java.util.Optional.of(subscription));
 
         subscriptionService.cancelSubscription("sub-1");
 
@@ -185,7 +276,8 @@ class SubscriptionServiceImplTest {
                 subscription.getStatus()
         );
 
-        verify(subscriptionRepository).save(subscription);
+        verify(subscriptionRepository)
+                .save(subscription);
     }
 
     @Test
@@ -201,7 +293,7 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findByUserIdAndStatus(
                 "user-1",
                 SubscriptionStatus.ACTIVE
-        )).thenReturn(Optional.of(subscription));
+        )).thenReturn(java.util.Optional.of(subscription));
 
         subscriptionService.consumeCredit(
                 "user-1",
@@ -213,7 +305,8 @@ class SubscriptionServiceImplTest {
                 subscription.getRemainingCredit()
         );
 
-        verify(subscriptionRepository).save(subscription);
+        verify(subscriptionRepository)
+                .save(subscription);
     }
 
     @Test
@@ -229,7 +322,7 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findByUserIdAndStatus(
                 "user-1",
                 SubscriptionStatus.ACTIVE
-        )).thenReturn(Optional.of(subscription));
+        )).thenReturn(java.util.Optional.of(subscription));
 
         assertThrows(
                 IllegalStateException.class,
@@ -245,7 +338,7 @@ class SubscriptionServiceImplTest {
         when(subscriptionRepository.findByUserIdAndStatus(
                 "user-1",
                 SubscriptionStatus.ACTIVE
-        )).thenReturn(Optional.empty());
+        )).thenReturn(java.util.Optional.empty());
 
         assertThrows(
                 ResourceNotFoundException.class,

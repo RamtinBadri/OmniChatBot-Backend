@@ -47,6 +47,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception exception) {
+        exception.printStackTrace(); // for debugging
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(
@@ -92,5 +93,25 @@ public class GlobalExceptionHandler {
                         exception.getMessage(),
                         LocalDateTime.now()
                 ));
+    }
+
+    @ExceptionHandler(CreditSourceNotSelectedException.class)
+    public ResponseEntity<ErrorResponse> handleCreditSourceNotSelected(CreditSourceNotSelectedException exception) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                exception.getMessage(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
+
+    @ExceptionHandler(InsufficientCreditException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientCredit(InsufficientCreditException exception) {
+        return ResponseEntity.status(422).body(new ErrorResponse(
+                422,
+                exception.getMessage(),
+                LocalDateTime.now()
+        ));
     }
 }

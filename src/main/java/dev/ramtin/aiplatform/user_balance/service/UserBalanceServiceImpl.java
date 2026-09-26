@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.user_balance.service;
 
+import dev.ramtin.aiplatform.exception.InsufficientCreditException;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.transaction.Transaction;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;
@@ -68,7 +69,7 @@ public class UserBalanceServiceImpl implements UserBalanceService {
         UserBalance balance = getBalanceByUserId(userId);
 
         if (balance.getBalance().compareTo(amount) < 0) {
-            throw new IllegalStateException("Insufficient balance");
+            throw new InsufficientCreditException("Insufficient balance");
         }
 
         balance.setBalance(balance.getBalance().subtract(amount));

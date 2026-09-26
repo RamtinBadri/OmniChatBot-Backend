@@ -6,13 +6,13 @@ import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
 import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.credit.CreditSourceHandler;
 import dev.ramtin.aiplatform.exception.AIProviderException;
-import dev.ramtin.aiplatform.exception.ModelPricingNotFoundException;
+import dev.ramtin.aiplatform.exception.CreditSourceNotSelectedException;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageRepository;
 import dev.ramtin.aiplatform.model_pricing.CostCalculator;
 import dev.ramtin.aiplatform.model_pricing.ModelPricing;
-import dev.ramtin.aiplatform.model_pricing.ModelPricingRepository;
+import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import dev.ramtin.aiplatform.omniroute.request.OmniRouteMessage;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponse;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteUsage;
@@ -35,7 +35,7 @@ public class AIServiceImpl implements AIService {
     private final MessageRepository messageRepository;
     private final AIRequestRepository aiRequestRepository;
     private final UsageRecordRepository usageRecordRepository;
-    private final ModelPricingRepository modelPricingRepository;
+    private final ModelPricingService modelPricingService;
     private final CostCalculator costCalculator;
     private final UserRepository userRepository;
     private final List<CreditSourceHandler> creditSourceHandlers;
@@ -43,14 +43,14 @@ public class AIServiceImpl implements AIService {
     public AIServiceImpl(OmniRouteClient omniRouteClient, AIProperties aiProperties,
                          MessageRepository messageRepository, AIRequestRepository aiRequestRepository,
                          UsageRecordRepository usageRecordRepository,
-                         ModelPricingRepository modelPricingRepository, CostCalculator costCalculator,
+                         ModelPricingService modelPricingService, CostCalculator costCalculator,
                          UserRepository userRepository, List<CreditSourceHandler> creditSourceHandlers) {
         this.omniRouteClient = omniRouteClient;
         this.aiProperties = aiProperties;
         this.messageRepository = messageRepository;
         this.aiRequestRepository = aiRequestRepository;
         this.usageRecordRepository = usageRecordRepository;
-        this.modelPricingRepository = modelPricingRepository;
+        this.modelPricingService = modelPricingService;
         this.costCalculator = costCalculator;
         this.userRepository = userRepository;
         this.creditSourceHandlers = creditSourceHandlers;
@@ -81,17 +81,12 @@ public class AIServiceImpl implements AIService {
                         .content(message.getContent())
                         .build())
                 .toList();
-        try{
+        try {
             OmniRouteResponse response = omniRouteClient.sendMessage(requestedModel, omniRouteMessages);
 
-            ModelPricing pricing = modelPricingRepository
-                    .findByModelAndActiveTrue(response.getModel())
-                    .orElseThrow(() ->
-                            new ModelPricingNotFoundException(
-                                    "No active pricing found for model: "
-                                            + response.getModel()
-                            )
-                    );
+            String actualModel = response.getModel();
+
+            ModelPricing pricing = modelPricingService.getPricing(actualModel);
 
             OmniRouteUsage usage = response.getUsage();
 
@@ -147,6 +142,10 @@ public class AIServiceImpl implements AIService {
     private void consumeCredit(String userId, BigDecimal amount) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
+
+        if (user.getCreditSource() == null) {
+            throw new CreditSourceNotSelectedException("Credit source has not been selected");
+        }
 
         CreditSourceHandler handler = getCreditSourceHandler(user.getCreditSource());
         handler.consume(userId, amount);

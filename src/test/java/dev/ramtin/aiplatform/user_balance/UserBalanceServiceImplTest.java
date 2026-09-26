@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.user_balance;
 
+import dev.ramtin.aiplatform.exception.InsufficientCreditException;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.transaction.Transaction;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;
@@ -20,6 +21,7 @@ import static org.mockito.Mockito.*;
 class UserBalanceServiceImplTest {
     @Mock
     private UserBalanceRepository userBalanceRepository;
+
     @Mock
     private TransactionService transactionService;
 
@@ -28,7 +30,10 @@ class UserBalanceServiceImplTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        userBalanceService = new UserBalanceServiceImpl(userBalanceRepository, transactionService);
+        userBalanceService = new UserBalanceServiceImpl(
+                userBalanceRepository,
+                transactionService
+        );
     }
 
     @Test
@@ -60,9 +65,11 @@ class UserBalanceServiceImplTest {
                 .currency("USD")
                 .build();
 
-        when(userBalanceRepository.findByUserId("user-1")).thenReturn(Optional.of(balance));
+        when(userBalanceRepository.findByUserId("user-1"))
+                .thenReturn(Optional.of(balance));
 
-        UserBalance result = userBalanceService.getBalanceByUserId("user-1");
+        UserBalance result =
+                userBalanceService.getBalanceByUserId("user-1");
 
         assertEquals("balance-1", result.getId());
         assertEquals("user-1", result.getUserId());
@@ -74,7 +81,8 @@ class UserBalanceServiceImplTest {
 
     @Test
     void shouldThrowExceptionWhenBalanceDoesNotExist() {
-        when(userBalanceRepository.findByUserId("user-1")).thenReturn(Optional.empty());
+        when(userBalanceRepository.findByUserId("user-1"))
+                .thenReturn(Optional.empty());
 
         assertThrows(
                 ResourceNotFoundException.class,
@@ -92,9 +100,11 @@ class UserBalanceServiceImplTest {
                 .currency("USD")
                 .build();
 
-        when(userBalanceRepository.findByUserId("user-1")).thenReturn(Optional.of(balance));
+        when(userBalanceRepository.findByUserId("user-1"))
+                .thenReturn(Optional.of(balance));
 
-        when(userBalanceRepository.save(balance)).thenReturn(balance);
+        when(userBalanceRepository.save(balance))
+                .thenReturn(balance);
 
         userBalanceService.increaseBalance(
                 "user-1",
@@ -152,7 +162,7 @@ class UserBalanceServiceImplTest {
                 .thenReturn(Optional.of(balance));
 
         assertThrows(
-                IllegalStateException.class,
+                InsufficientCreditException.class,
                 () -> userBalanceService.decreaseBalance(
                         "user-1",
                         BigDecimal.valueOf(15)

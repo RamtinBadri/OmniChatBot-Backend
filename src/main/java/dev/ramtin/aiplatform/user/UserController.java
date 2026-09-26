@@ -1,6 +1,7 @@
 package dev.ramtin.aiplatform.user;
 
 import dev.ramtin.aiplatform.security.CustomUserDetails;
+import dev.ramtin.aiplatform.user.dto.UpdateCreditSourceRequest;
 import dev.ramtin.aiplatform.user.dto.UpdateUserRequest;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
 import dev.ramtin.aiplatform.user.service.UserService;
@@ -72,5 +73,31 @@ public class UserController {
         String userId = userDetails.getId();
         UserDTO userDTO = userService.getUserById(userId);
         return ResponseEntity.ok(userDTO);
+    }
+
+    @PutMapping("/{userId}/credit-source")
+    public ResponseEntity<Void> updateCreditSource(@PathVariable String userId, @RequestBody UpdateCreditSourceRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new AccessDeniedException("User is not authenticated");
+        }
+
+        Object principal = authentication.getPrincipal();
+
+        if (!(principal instanceof CustomUserDetails userDetails)) {
+            throw new AccessDeniedException("Invalid authenticated user");
+        }
+
+        if (userDetails.getId() == null) {
+            throw new AccessDeniedException("Authenticated user has no ID");
+        }
+
+        if (!userDetails.getId().equals(userId)) {
+            throw new AccessDeniedException("You can only update your own credit source");
+        }
+
+        userService.updateCreditSource(userId, request.getCreditSource());
+        return ResponseEntity.noContent().build();
     }
 }
