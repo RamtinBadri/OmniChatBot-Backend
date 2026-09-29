@@ -28,4 +28,15 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(subscription);
     }
+
+    @GetMapping("/current")
+    public ResponseEntity<Subscription> getCurrentSubscription() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String userId = userDetails.getId();
+
+        Subscription subscription = subscriptionService.getCurrentSubscription(userId);
+        return ResponseEntity.ok(subscription);
+    }
 }

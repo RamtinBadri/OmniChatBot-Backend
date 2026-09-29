@@ -94,4 +94,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         subscriptionRepository.save(subscription);
     }
+
+    @Override
+    public Subscription getCurrentSubscription(String userId) {
+        return subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("No active subscription found"));
+    }
 }

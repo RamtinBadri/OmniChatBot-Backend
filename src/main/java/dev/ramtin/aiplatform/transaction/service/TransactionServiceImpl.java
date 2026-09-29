@@ -5,6 +5,8 @@ import dev.ramtin.aiplatform.transaction.Transaction;
 import dev.ramtin.aiplatform.transaction.TransactionRepository;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;
 import dev.ramtin.aiplatform.transaction.TransactionType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -46,6 +48,11 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setStatus(status);
 
         return transactionRepository.save(transaction);
+    }
+
+    @Override
+    public Page<Transaction> getTransactionHistory(String userId, Pageable pageable) {
+        return transactionRepository.findByUserId(userId, pageable);
     }
 
     // Transaction Validator

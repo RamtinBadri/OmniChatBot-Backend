@@ -3,6 +3,8 @@ package dev.ramtin.aiplatform.plan.service;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.plan.Plan;
 import dev.ramtin.aiplatform.plan.PlanRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -67,6 +69,11 @@ public class PlanServiceImpl implements PlanService {
         plan.setUpdatedAt(LocalDateTime.now());
 
         planRepository.save(plan);
+    }
+
+    @Override
+    public Page<Plan> getActivePlans(Pageable pageable) {
+        return planRepository.findByActiveTrue(pageable);
     }
 
     private void validatePlan(Plan plan) {

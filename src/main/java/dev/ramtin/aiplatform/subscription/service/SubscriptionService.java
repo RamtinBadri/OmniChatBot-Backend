@@ -12,4 +12,6 @@ public interface SubscriptionService {
     void cancelSubscription(String subscriptionId);
 
     void consumeCredit(String userId, BigDecimal amount);
+
+    Subscription getCurrentSubscription(String userId);
 }
