@@ -1,5 +1,7 @@
-package dev.ramtin.aiplatform.conversation;
+package dev.ramtin.aiplatform.conversation.repository;
 
+import dev.ramtin.aiplatform.conversation.Conversation;
+import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

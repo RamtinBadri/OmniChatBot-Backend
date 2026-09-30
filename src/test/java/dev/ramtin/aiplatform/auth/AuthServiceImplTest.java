@@ -3,7 +3,7 @@ package dev.ramtin.aiplatform.auth;
 import dev.ramtin.aiplatform.exception.ResourceConflictException;
 import dev.ramtin.aiplatform.security.JwtTokenProvider;
 import dev.ramtin.aiplatform.user.User;
-import dev.ramtin.aiplatform.user.UserRepository;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import dev.ramtin.aiplatform.user.UserRole;
 import dev.ramtin.aiplatform.user.UserStatus;
 import dev.ramtin.aiplatform.user.dto.LoginRequest;

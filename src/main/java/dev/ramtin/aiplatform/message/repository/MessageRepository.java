@@ -1,5 +1,6 @@
-package dev.ramtin.aiplatform.message;
+package dev.ramtin.aiplatform.message.repository;
 
+import dev.ramtin.aiplatform.message.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;

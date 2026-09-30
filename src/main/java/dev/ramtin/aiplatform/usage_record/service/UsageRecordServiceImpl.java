@@ -1,7 +1,7 @@
 package dev.ramtin.aiplatform.usage_record.service;
 
 import dev.ramtin.aiplatform.usage_record.UsageRecord;
-import dev.ramtin.aiplatform.usage_record.UsageRecordRepository;
+import dev.ramtin.aiplatform.usage_record.repository.UsageRecordRepository;
 import dev.ramtin.aiplatform.usage_record.dto.UsageSummary;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

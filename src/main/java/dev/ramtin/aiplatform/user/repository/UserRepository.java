@@ -1,5 +1,6 @@
-package dev.ramtin.aiplatform.user;
+package dev.ramtin.aiplatform.user.repository;
 
+import dev.ramtin.aiplatform.user.User;
 import org.jspecify.annotations.NonNull;
 import org.springframework.data.mongodb.repository.MongoRepository;
 

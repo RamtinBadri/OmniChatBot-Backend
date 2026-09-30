@@ -2,10 +2,10 @@ package dev.ramtin.aiplatform.message.service;
 
 import dev.ramtin.aiplatform.ai.AIService;
 import dev.ramtin.aiplatform.conversation.Conversation;
-import dev.ramtin.aiplatform.conversation.ConversationRepository;
+import dev.ramtin.aiplatform.conversation.repository.ConversationRepository;
 import dev.ramtin.aiplatform.message.Message;
 import dev.ramtin.aiplatform.message.MessageMapper;
-import dev.ramtin.aiplatform.message.MessageRepository;
+import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.message.dto.MessageDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;

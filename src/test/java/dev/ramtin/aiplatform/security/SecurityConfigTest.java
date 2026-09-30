@@ -1,7 +1,7 @@
 package dev.ramtin.aiplatform.security;
 
 import dev.ramtin.aiplatform.user.User;
-import dev.ramtin.aiplatform.user.UserRepository;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import dev.ramtin.aiplatform.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

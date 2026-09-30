@@ -1,9 +1,10 @@
 package dev.ramtin.aiplatform.plan;
 
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
+import dev.ramtin.aiplatform.plan.repository.PlanRepository;
 import dev.ramtin.aiplatform.plan.service.PlanServiceImpl;
 import dev.ramtin.aiplatform.subscription.Subscription;
-import dev.ramtin.aiplatform.subscription.SubscriptionRepository;
+import dev.ramtin.aiplatform.subscription.repository.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;

@@ -1,13 +1,13 @@
 package dev.ramtin.aiplatform.ai;
 
 import dev.ramtin.aiplatform.ai.request.AIRequest;
-import dev.ramtin.aiplatform.ai.request.AIRequestRepository;
+import dev.ramtin.aiplatform.ai.request.repository.AIRequestRepository;
 import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
 import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.credit.CreditSourceHandler;
 import dev.ramtin.aiplatform.exception.AIProviderException;
 import dev.ramtin.aiplatform.message.Message;
-import dev.ramtin.aiplatform.message.MessageRepository;
+import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
 import dev.ramtin.aiplatform.model_pricing.CostCalculator;
 import dev.ramtin.aiplatform.model_pricing.ModelPricing;
@@ -18,10 +18,10 @@ import dev.ramtin.aiplatform.omniroute.response.OmniRouteResponseMessage;
 import dev.ramtin.aiplatform.omniroute.response.OmniRouteUsage;
 import dev.ramtin.aiplatform.omniroute.service.OmniRouteClient;
 import dev.ramtin.aiplatform.usage_record.UsageRecord;
-import dev.ramtin.aiplatform.usage_record.UsageRecordRepository;
+import dev.ramtin.aiplatform.usage_record.repository.UsageRecordRepository;
 import dev.ramtin.aiplatform.user.CreditSource;
 import dev.ramtin.aiplatform.user.User;
-import dev.ramtin.aiplatform.user.UserRepository;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

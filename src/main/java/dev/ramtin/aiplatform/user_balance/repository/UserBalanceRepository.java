@@ -1,5 +1,6 @@
-package dev.ramtin.aiplatform.user_balance;
+package dev.ramtin.aiplatform.user_balance.repository;
 
+import dev.ramtin.aiplatform.user_balance.UserBalance;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

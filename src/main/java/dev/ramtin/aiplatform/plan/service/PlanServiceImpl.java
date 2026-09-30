@@ -2,9 +2,9 @@ package dev.ramtin.aiplatform.plan.service;
 
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.plan.Plan;
-import dev.ramtin.aiplatform.plan.PlanRepository;
+import dev.ramtin.aiplatform.plan.repository.PlanRepository;
 import dev.ramtin.aiplatform.subscription.Subscription;
-import dev.ramtin.aiplatform.subscription.SubscriptionRepository;
+import dev.ramtin.aiplatform.subscription.repository.SubscriptionRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;

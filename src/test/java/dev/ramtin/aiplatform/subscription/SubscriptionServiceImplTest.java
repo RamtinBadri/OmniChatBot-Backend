@@ -2,7 +2,8 @@ package dev.ramtin.aiplatform.subscription;
 
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.plan.Plan;
-import dev.ramtin.aiplatform.plan.PlanRepository;
+import dev.ramtin.aiplatform.plan.repository.PlanRepository;
+import dev.ramtin.aiplatform.subscription.repository.SubscriptionRepository;
 import dev.ramtin.aiplatform.subscription.service.SubscriptionServiceImpl;
 import dev.ramtin.aiplatform.transaction.Transaction;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;

@@ -3,6 +3,7 @@ package dev.ramtin.aiplatform.user;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.user.dto.UpdateUserRequest;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import dev.ramtin.aiplatform.user.service.UserServiceImpl;
 import dev.ramtin.aiplatform.exception.ResourceConflictException;
 import org.junit.jupiter.api.Test;

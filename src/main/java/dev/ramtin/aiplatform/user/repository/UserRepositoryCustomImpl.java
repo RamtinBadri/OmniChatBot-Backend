@@ -1,5 +1,7 @@
-package dev.ramtin.aiplatform.user;
+package dev.ramtin.aiplatform.user.repository;
 
+import dev.ramtin.aiplatform.user.User;
+import dev.ramtin.aiplatform.user.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

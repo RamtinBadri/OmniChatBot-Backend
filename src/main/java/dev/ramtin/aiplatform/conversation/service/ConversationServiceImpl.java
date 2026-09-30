@@ -1,7 +1,7 @@
 package dev.ramtin.aiplatform.conversation.service;
 
 import dev.ramtin.aiplatform.conversation.Conversation;
-import dev.ramtin.aiplatform.conversation.ConversationRepository;
+import dev.ramtin.aiplatform.conversation.repository.ConversationRepository;
 import dev.ramtin.aiplatform.conversation.ConversationMapper;
 import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;

@@ -7,7 +7,7 @@ import dev.ramtin.aiplatform.transaction.TransactionStatus;
 import dev.ramtin.aiplatform.transaction.TransactionType;
 import dev.ramtin.aiplatform.transaction.service.TransactionService;
 import dev.ramtin.aiplatform.user_balance.UserBalance;
-import dev.ramtin.aiplatform.user_balance.UserBalanceRepository;
+import dev.ramtin.aiplatform.user_balance.repository.UserBalanceRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

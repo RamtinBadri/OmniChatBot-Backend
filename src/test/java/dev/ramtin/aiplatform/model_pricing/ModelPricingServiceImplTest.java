@@ -1,6 +1,7 @@
 package dev.ramtin.aiplatform.model_pricing;
 
 import dev.ramtin.aiplatform.config.DefaultPricingProperties;
+import dev.ramtin.aiplatform.model_pricing.repository.ModelPricingRepository;
 import dev.ramtin.aiplatform.model_pricing.service.ModelPricingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

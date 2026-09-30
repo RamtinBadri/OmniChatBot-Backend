@@ -1,5 +1,6 @@
-package dev.ramtin.aiplatform.plan;
+package dev.ramtin.aiplatform.plan.repository;
 
+import dev.ramtin.aiplatform.plan.Plan;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;

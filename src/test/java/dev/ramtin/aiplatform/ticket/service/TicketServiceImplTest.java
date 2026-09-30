@@ -7,6 +7,8 @@ import dev.ramtin.aiplatform.ticket.dto.ReplyToTicketRequest;
 import dev.ramtin.aiplatform.ticket.dto.TicketDTO;
 import dev.ramtin.aiplatform.ticket.dto.TicketHistoryDTO;
 import dev.ramtin.aiplatform.ticket.dto.UpdateTicketStatusRequest;
+import dev.ramtin.aiplatform.ticket.repository.TicketHistoryRepository;
+import dev.ramtin.aiplatform.ticket.repository.TicketRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;

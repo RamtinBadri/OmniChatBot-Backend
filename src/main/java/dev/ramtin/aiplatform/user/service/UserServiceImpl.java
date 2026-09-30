@@ -5,13 +5,12 @@ import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.user.*;
 import dev.ramtin.aiplatform.user.dto.UpdateUserRequest;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
-import dev.ramtin.aiplatform.user_balance.UserBalance;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service

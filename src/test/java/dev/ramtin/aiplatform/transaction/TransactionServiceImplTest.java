@@ -1,6 +1,7 @@
 package dev.ramtin.aiplatform.transaction;
 
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
+import dev.ramtin.aiplatform.transaction.repository.TransactionRepository;
 import dev.ramtin.aiplatform.transaction.service.TransactionServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

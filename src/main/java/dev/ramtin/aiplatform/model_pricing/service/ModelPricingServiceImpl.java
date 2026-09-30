@@ -2,7 +2,7 @@ package dev.ramtin.aiplatform.model_pricing.service;
 
 import dev.ramtin.aiplatform.config.DefaultPricingProperties;
 import dev.ramtin.aiplatform.model_pricing.ModelPricing;
-import dev.ramtin.aiplatform.model_pricing.ModelPricingRepository;
+import dev.ramtin.aiplatform.model_pricing.repository.ModelPricingRepository;
 import org.springframework.stereotype.Service;
 
 @Service

@@ -1,5 +1,6 @@
-package dev.ramtin.aiplatform.model_pricing;
+package dev.ramtin.aiplatform.model_pricing.repository;
 
+import dev.ramtin.aiplatform.model_pricing.ModelPricing;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.Optional;

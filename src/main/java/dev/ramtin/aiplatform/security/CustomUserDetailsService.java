@@ -1,7 +1,7 @@
 package dev.ramtin.aiplatform.security;
 
 import dev.ramtin.aiplatform.user.User;
-import dev.ramtin.aiplatform.user.UserRepository;
+import dev.ramtin.aiplatform.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.authority.AuthorityUtils;

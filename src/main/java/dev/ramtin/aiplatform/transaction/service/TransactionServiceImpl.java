@@ -2,7 +2,7 @@ package dev.ramtin.aiplatform.transaction.service;
 
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.transaction.Transaction;
-import dev.ramtin.aiplatform.transaction.TransactionRepository;
+import dev.ramtin.aiplatform.transaction.repository.TransactionRepository;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;
 import dev.ramtin.aiplatform.transaction.TransactionType;
 import org.springframework.data.domain.Page;

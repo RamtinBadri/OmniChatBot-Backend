@@ -1,10 +1,10 @@
 package dev.ramtin.aiplatform.message.service;
 
 import dev.ramtin.aiplatform.conversation.Conversation;
-import dev.ramtin.aiplatform.conversation.ConversationRepository;
+import dev.ramtin.aiplatform.conversation.repository.ConversationRepository;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.message.Message;
-import dev.ramtin.aiplatform.message.MessageRepository;
+import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
