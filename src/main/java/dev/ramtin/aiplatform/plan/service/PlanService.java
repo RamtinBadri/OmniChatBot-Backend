@@ -1,6 +1,7 @@
 package dev.ramtin.aiplatform.plan.service;
 
 import dev.ramtin.aiplatform.plan.Plan;
+import dev.ramtin.aiplatform.subscription.Subscription;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -14,4 +15,6 @@ public interface PlanService {
     void deactivatePlan(String planId);
 
     Page<Plan> getActivePlans(Pageable pageable);
+
+    Page<Subscription> getSubscriptionsByPlan(String planId, Pageable pageable);
 }

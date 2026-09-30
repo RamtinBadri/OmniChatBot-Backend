@@ -55,6 +55,11 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.findByUserId(userId, pageable);
     }
 
+    @Override
+    public Page<Transaction> getTransactions(String userId, TransactionType type, TransactionStatus status, Pageable pageable) {
+        return transactionRepository.findTransactions(userId, type, status, pageable);
+    }
+
     // Transaction Validator
     private void validateTransaction(TransactionType type, BigDecimal amount, String currency) {
         if(type == null) {

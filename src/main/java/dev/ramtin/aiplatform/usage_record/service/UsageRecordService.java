@@ -9,4 +9,6 @@ public interface UsageRecordService {
     Page<UsageRecord> getUsageHistory(String userId, Pageable pageable);
 
     UsageSummary getUsageSummary(String userId);
+
+    Page<UsageRecord> getUsageRecords(String userId, String model, Pageable pageable);
 }

@@ -21,4 +21,6 @@ public interface UserService {
     void updateUserRole(String userId, UserRole role);
 
     void updateCreditSource(String userId, CreditSource creditSource);
+
+    void deleteUser(String userId);
 }

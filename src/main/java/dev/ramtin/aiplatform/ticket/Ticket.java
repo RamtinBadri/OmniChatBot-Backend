@@ -11,10 +11,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Document(collection = "tickets")
-@CompoundIndex(
-        name = "userId_createdAt",
-        def = "{'userId': 1, 'createdAt': -1}"
-)
+@CompoundIndex(name = "userId_createdAt", def = "{'userId': 1, 'createdAt': -1}")
 @Data
 @Builder
 @NoArgsConstructor

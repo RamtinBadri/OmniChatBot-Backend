@@ -30,12 +30,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 !authorizationHeader.startsWith("Bearer ")) {
             String uri = request.getRequestURI();
 
-            if (uri.equals("/api/auth/register") || uri.equals("/api/auth/login") ||
-                    uri.equals("/api/plans")) {
+            if (uri.equals("/api/auth/register") || uri.equals("/api/auth/login")
+                    || ("GET".equals(request.getMethod()) && uri.equals("/api/plans"))) {
                 filterChain.doFilter(request, response);
                 return;
             }
-
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return;
         }

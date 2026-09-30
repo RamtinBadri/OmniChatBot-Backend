@@ -10,6 +10,8 @@ import dev.ramtin.aiplatform.transaction.Transaction;
 import dev.ramtin.aiplatform.transaction.TransactionStatus;
 import dev.ramtin.aiplatform.transaction.TransactionType;
 import dev.ramtin.aiplatform.transaction.service.TransactionService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -99,5 +101,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public Subscription getCurrentSubscription(String userId) {
         return subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("No active subscription found"));
+    }
+
+    @Override
+    public Page<Subscription> getSubscriptions(String userId, String planId, SubscriptionStatus status, Pageable pageable) {
+        return subscriptionRepository.findSubscriptions(userId, planId, status, pageable);
     }
 }

@@ -17,4 +17,6 @@ public interface TransactionService {
     Transaction updateStatus(String transactionId, TransactionStatus status);
 
     Page<Transaction> getTransactionHistory(String userId, Pageable pageable);
+
+    Page<Transaction> getTransactions(String userId, TransactionType type, TransactionStatus status, Pageable pageable);
 }

@@ -24,4 +24,9 @@ public class UsageRecordServiceImpl implements UsageRecordService {
     public UsageSummary getUsageSummary(String userId) {
         return usageRecordRepository.getUsageSummary(userId);
     }
+
+    @Override
+    public Page<UsageRecord> getUsageRecords(String userId, String model, Pageable pageable) {
+        return usageRecordRepository.findUsageRecords(userId, model, pageable);
+    }
 }

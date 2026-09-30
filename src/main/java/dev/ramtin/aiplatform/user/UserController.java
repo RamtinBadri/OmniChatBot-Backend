@@ -3,6 +3,7 @@ package dev.ramtin.aiplatform.user;
 import dev.ramtin.aiplatform.security.CustomUserDetails;
 import dev.ramtin.aiplatform.user.dto.UpdateCreditSourceRequest;
 import dev.ramtin.aiplatform.user.dto.UpdateUserRequest;
+import dev.ramtin.aiplatform.user.dto.UpdateUserRoleRequest;
 import dev.ramtin.aiplatform.user.dto.UserDTO;
 import dev.ramtin.aiplatform.user.service.UserService;
 import jakarta.validation.Valid;
@@ -98,6 +99,19 @@ public class UserController {
         }
 
         userService.updateCreditSource(userId, request.getCreditSource());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<Void> updateUserRole(@PathVariable String userId,
+                                               @Valid @RequestBody UpdateUserRoleRequest request) {
+        userService.updateUserRole(userId, request.getRole());
         return ResponseEntity.noContent().build();
     }
 }

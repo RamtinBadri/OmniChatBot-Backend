@@ -1,6 +1,7 @@
-package dev.ramtin.aiplatform.ticket;
+package dev.ramtin.aiplatform.admin;
 
 import dev.ramtin.aiplatform.security.CustomUserDetails;
+import dev.ramtin.aiplatform.ticket.TicketStatus;
 import dev.ramtin.aiplatform.ticket.dto.ReplyToTicketRequest;
 import dev.ramtin.aiplatform.ticket.dto.TicketDTO;
 import dev.ramtin.aiplatform.ticket.dto.TicketHistoryDTO;
