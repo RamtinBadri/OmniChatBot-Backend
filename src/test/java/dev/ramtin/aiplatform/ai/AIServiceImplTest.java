@@ -1,14 +1,15 @@
 package dev.ramtin.aiplatform.ai;
 
 import dev.ramtin.aiplatform.ai.request.AIRequest;
-import dev.ramtin.aiplatform.ai.request.repository.AIRequestRepository;
 import dev.ramtin.aiplatform.ai.request.AIRequestStatus;
+import dev.ramtin.aiplatform.ai.request.repository.AIRequestRepository;
 import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.credit.CreditSourceHandler;
 import dev.ramtin.aiplatform.exception.AIProviderException;
+import dev.ramtin.aiplatform.exception.ModelPricingNotFoundException;
 import dev.ramtin.aiplatform.message.Message;
-import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import dev.ramtin.aiplatform.message.MessageRole;
+import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import dev.ramtin.aiplatform.model_pricing.CostCalculator;
 import dev.ramtin.aiplatform.model_pricing.ModelPricing;
 import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
@@ -30,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +43,6 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AIServiceImplTest {
-
     @Mock
     private OmniRouteClient omniRouteClient;
 
@@ -616,6 +617,360 @@ class AIServiceImplTest {
 
         verify(creditSourceHandler)
                 .getCreditSource();
+
+        verify(creditSourceHandler)
+                .consume(
+                        eq("user123"),
+                        argThat(amount ->
+                                amount.compareTo(
+                                        new BigDecimal("0.00009")
+                                ) == 0
+                        )
+                );
+    }
+
+    @Test
+    void generateResponse_whenPricingFails_propagatesException() {
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        OmniRouteResponse response =
+                new OmniRouteResponse(
+                        "response-123",
+                        "glm-5",
+                        List.of(
+                                new OmniRouteChoice(
+                                        0,
+                                        "stop",
+                                        new OmniRouteResponseMessage(
+                                                "assistant",
+                                                "Hello"
+                                        )
+                                )
+                        ),
+                        new OmniRouteUsage(
+                                100,
+                                20,
+                                120
+                        )
+                );
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                anyList()
+        )).thenReturn(response);
+
+        when(modelPricingService.getPricing("glm-5"))
+                .thenThrow(
+                        new ModelPricingNotFoundException(
+                                "Pricing not found for model: glm-5"
+                        )
+                );
+
+        assertThrows(
+                ModelPricingNotFoundException.class,
+                () -> aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                )
+        );
+
+        ArgumentCaptor<AIRequest> captor =
+                ArgumentCaptor.forClass(AIRequest.class);
+
+        verify(aiRequestRepository, times(3))
+                .save(captor.capture());
+
+        List<AIRequest> savedRequests =
+                captor.getAllValues();
+
+        AIRequest finalRequest =
+                savedRequests.get(
+                        savedRequests.size() - 1
+                );
+
+        assertEquals(
+                AIRequestStatus.FAILED,
+                finalRequest.getStatus()
+        );
+
+        verify(omniRouteClient)
+                .sendMessage(
+                        eq("auto/best-coding"),
+                        anyList()
+                );
+
+        verify(modelPricingService)
+                .getPricing("glm-5");
+
+        verify(usageRecordRepository, never())
+                .save(any(UsageRecord.class));
+
+        verify(userRepository, never())
+                .findById(any());
+
+        verify(creditSourceHandler, never())
+                .consume(any(), any());
+    }
+
+    @Test
+    void generateResponse_whenCreditConsumptionFails_marksAIRequestAsFailed() {
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation ->
+                        invocation.getArgument(0)
+                );
+
+        OmniRouteResponse response =
+                new OmniRouteResponse(
+                        "response-123",
+                        "glm-5",
+                        List.of(
+                                new OmniRouteChoice(
+                                        0,
+                                        "stop",
+                                        new OmniRouteResponseMessage(
+                                                "assistant",
+                                                "Hello"
+                                        )
+                                )
+                        ),
+                        new OmniRouteUsage(
+                                100,
+                                20,
+                                120
+                        )
+                );
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                anyList()
+        )).thenReturn(response);
+
+        ModelPricing pricing =
+                ModelPricing.builder()
+                        .model("glm-5")
+                        .inputPricePerMillion(
+                                new BigDecimal("0.50")
+                        )
+                        .outputPricePerMillion(
+                                new BigDecimal("2.00")
+                        )
+                        .active(true)
+                        .build();
+
+        when(modelPricingService.getPricing("glm-5"))
+                .thenReturn(pricing);
+
+        User user = User.builder()
+                .id("user123")
+                .creditSource(CreditSource.SUBSCRIPTION)
+                .build();
+
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(user));
+
+        when(creditSourceHandler.getCreditSource())
+                .thenReturn(CreditSource.SUBSCRIPTION);
+
+        doThrow(
+                new RuntimeException("Credit consumption failed")
+        ).when(creditSourceHandler)
+                .consume(
+                        eq("user123"),
+                        any(BigDecimal.class)
+                );
+
+        assertThrows(
+                RuntimeException.class,
+                () -> aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                )
+        );
+
+        ArgumentCaptor<AIRequest> captor =
+                ArgumentCaptor.forClass(AIRequest.class);
+
+        verify(aiRequestRepository, times(3))
+                .save(captor.capture());
+
+        AIRequest finalRequest =
+                captor.getAllValues()
+                        .get(
+                                captor.getAllValues().size() - 1
+                        );
+
+        assertEquals(
+                AIRequestStatus.FAILED,
+                finalRequest.getStatus()
+        );
+
+        assertNotNull(
+                finalRequest.getResponseTime()
+        );
+
+        verify(usageRecordRepository, never())
+                .save(any(UsageRecord.class));
+
+        verify(creditSourceHandler)
+                .consume(
+                        eq("user123"),
+                        argThat(amount ->
+                                amount.compareTo(
+                                        new BigDecimal("0.00009")
+                                ) == 0
+                        )
+                );
+    }
+
+    @Test
+    void generateResponse_whenFinalAIRequestSaveFails_marksAIRequestAsFailed() {
+        when(aiProperties.getDefaultModel())
+                .thenReturn("auto/best-coding");
+
+        when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
+                "conversation123"
+        )).thenReturn(List.of());
+
+        when(aiRequestRepository.save(any(AIRequest.class)))
+                .thenAnswer(invocation -> {
+                    AIRequest request =
+                            invocation.getArgument(0);
+
+                    if (request.getStatus() == AIRequestStatus.SUCCESS) {
+                        throw new RuntimeException(
+                                "AI request save failed"
+                        );
+                    }
+
+                    return request;
+                });
+
+        OmniRouteResponse response =
+                new OmniRouteResponse(
+                        "response-123",
+                        "glm-5",
+                        List.of(
+                                new OmniRouteChoice(
+                                        0,
+                                        "stop",
+                                        new OmniRouteResponseMessage(
+                                                "assistant",
+                                                "Hello"
+                                        )
+                                )
+                        ),
+                        new OmniRouteUsage(
+                                100,
+                                20,
+                                120
+                        )
+                );
+
+        when(omniRouteClient.sendMessage(
+                eq("auto/best-coding"),
+                anyList()
+        )).thenReturn(response);
+
+        ModelPricing pricing =
+                ModelPricing.builder()
+                        .model("glm-5")
+                        .inputPricePerMillion(
+                                new BigDecimal("0.50")
+                        )
+                        .outputPricePerMillion(
+                                new BigDecimal("2.00")
+                        )
+                        .active(true)
+                        .build();
+
+        when(modelPricingService.getPricing("glm-5"))
+                .thenReturn(pricing);
+
+        User user = User.builder()
+                .id("user123")
+                .creditSource(CreditSource.SUBSCRIPTION)
+                .build();
+
+        when(userRepository.findById("user123"))
+                .thenReturn(Optional.of(user));
+
+        when(creditSourceHandler.getCreditSource())
+                .thenReturn(CreditSource.SUBSCRIPTION);
+
+        doNothing()
+                .when(creditSourceHandler)
+                .consume(
+                        eq("user123"),
+                        any(BigDecimal.class)
+                );
+
+        UsageRecord usageRecord =
+                UsageRecord.builder()
+                        .aiRequestId("request123")
+                        .userId("user123")
+                        .conversationId("conversation123")
+                        .model("glm-5")
+                        .inputTokens(100)
+                        .outputTokens(20)
+                        .totalTokens(120)
+                        .providerCost(new BigDecimal("0.00009"))
+                        .chargedAmount(new BigDecimal("0.00009"))
+                        .timestamp(LocalDateTime.now())
+                        .build();
+
+        when(usageRecordRepository.save(any(UsageRecord.class)))
+                .thenReturn(usageRecord);
+
+        assertThrows(
+                RuntimeException.class,
+                () -> aiService.generateResponse(
+                        "user123",
+                        "conversation123"
+                )
+        );
+
+        ArgumentCaptor<AIRequest> captor =
+                ArgumentCaptor.forClass(AIRequest.class);
+
+        verify(aiRequestRepository, times(4))
+                .save(captor.capture());
+
+        List<AIRequest> savedRequests =
+                captor.getAllValues();
+
+        AIRequest finalRequest =
+                savedRequests.get(
+                        savedRequests.size() - 1
+                );
+
+        assertEquals(
+                AIRequestStatus.FAILED,
+                finalRequest.getStatus()
+        );
+
+        assertNotNull(
+                finalRequest.getResponseTime()
+        );
+
+        verify(usageRecordRepository)
+                .save(any(UsageRecord.class));
 
         verify(creditSourceHandler)
                 .consume(

@@ -73,43 +73,38 @@ public class AIServiceImpl implements AIService {
         aiRequest.setStatus(AIRequestStatus.PROCESSING);
         aiRequestRepository.save(aiRequest);
 
-        List<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
-
-        List<OmniRouteMessage> omniRouteMessages = messages.stream()
-                .map(message -> OmniRouteMessage.builder()
-                        .role(message.getRole().name().toLowerCase())
-                        .content(message.getContent())
-                        .build())
-                .toList();
         try {
+            List<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
+
+            List<OmniRouteMessage> omniRouteMessages = messages.stream()
+                    .map(message -> OmniRouteMessage.builder()
+                            .role(message.getRole().name().toLowerCase())
+                            .content(message.getContent())
+                            .build())
+                    .toList();
+
             OmniRouteResponse response = omniRouteClient.sendMessage(requestedModel, omniRouteMessages);
-
             String actualModel = response.getModel();
-
             ModelPricing pricing = modelPricingService.getPricing(actualModel);
 
             OmniRouteUsage usage = response.getUsage();
 
-            BigDecimal providerCost = costCalculator.calculate(
-                    usage.getPromptTokens(),
-                    usage.getCompletionTokens(),
-                    pricing
-            );
-
+            BigDecimal providerCost = costCalculator.calculate(usage.getPromptTokens(),
+                            usage.getCompletionTokens(), pricing);
             consumeCredit(userId, providerCost);
 
             UsageRecord usageRecord = UsageRecord.builder()
-                    .aiRequestId(aiRequest.getId())
-                    .userId(userId)
-                    .conversationId(conversationId)
-                    .model(response.getModel())
-                    .inputTokens(usage.getPromptTokens())
-                    .outputTokens(usage.getCompletionTokens())
-                    .totalTokens(usage.getTotalTokens())
-                    .providerCost(providerCost)
-                    .chargedAmount(providerCost)
-                    .timestamp(LocalDateTime.now())
-                    .build();
+                            .aiRequestId(aiRequest.getId())
+                            .userId(userId)
+                            .conversationId(conversationId)
+                            .model(response.getModel())
+                            .inputTokens(usage.getPromptTokens())
+                            .outputTokens(usage.getCompletionTokens())
+                            .totalTokens(usage.getTotalTokens())
+                            .providerCost(providerCost)
+                            .chargedAmount(providerCost)
+                            .timestamp(LocalDateTime.now())
+                            .build();
 
             usageRecordRepository.save(usageRecord);
 
@@ -122,6 +117,13 @@ public class AIServiceImpl implements AIService {
             return response.getChoices().get(0).getMessage().getContent();
         } catch (AIProviderException exception) {
             aiRequest.setStatus(AIRequestStatus.PROVIDER_ERROR);
+            aiRequest.setResponseTime(LocalDateTime.now());
+
+            aiRequestRepository.save(aiRequest);
+
+            throw exception;
+        } catch (Exception exception) {
+            aiRequest.setStatus(AIRequestStatus.FAILED);
             aiRequest.setResponseTime(LocalDateTime.now());
 
             aiRequestRepository.save(aiRequest);

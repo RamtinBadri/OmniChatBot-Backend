@@ -23,14 +23,19 @@ import static org.mockito.Mockito.*;
 class JwtAuthenticationFilterTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
+
     @Mock
     private CustomUserDetailsService userDetailsService;
+
     @Mock
     private FilterChain filterChain;
+
     @Mock
     private HttpServletRequest request;
+
     @Mock
     private HttpServletResponse response;
+
     @InjectMocks
     private JwtAuthenticationFilter jwtAuthenticationFilter;
 
@@ -43,30 +48,47 @@ class JwtAuthenticationFilterTest {
     void doFilter_whenValidToken_authenticatesUser() throws ServletException, IOException {
         String token = "valid-token";
 
-        CustomUserDetails userDetails = new CustomUserDetails("user123", "ramtin", "password",
-                List.of(new SimpleGrantedAuthority("ROLE_USER")));
+        CustomUserDetails userDetails = new CustomUserDetails(
+                "user123",
+                "ramtin",
+                "password",
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        when(request.getHeader("Authorization"))
+                .thenReturn("Bearer " + token);
 
-        when(jwtTokenProvider.validateToken(token)).thenReturn(true);
+        when(jwtTokenProvider.validateToken(token))
+                .thenReturn(true);
 
-        when(jwtTokenProvider.getUsernameFromToken(token)).thenReturn("ramtin");
+        when(jwtTokenProvider.getUsernameFromToken(token))
+                .thenReturn("ramtin");
 
-        when(userDetailsService.loadUserByUsername("ramtin")).thenReturn(userDetails);
+        when(userDetailsService.loadUserByUsername("ramtin"))
+                .thenReturn(userDetails);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
-        assertNotNull(SecurityContextHolder.getContext().getAuthentication());
+        assertNotNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        );
 
-        assertEquals("ramtin", SecurityContextHolder.getContext()
-                .getAuthentication().getName());
+        assertEquals(
+                "ramtin",
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getName()
+        );
 
-        assertEquals("ROLE_USER", SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getAuthorities()
-                .iterator()
-                .next()
-                .getAuthority());
+        assertEquals(
+                "ROLE_USER",
+                SecurityContextHolder.getContext()
+                        .getAuthentication()
+                        .getAuthorities()
+                        .iterator()
+                        .next()
+                        .getAuthority()
+        );
 
         verify(jwtTokenProvider).validateToken(token);
         verify(jwtTokenProvider).getUsernameFromToken(token);
@@ -76,43 +98,57 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void doFilter_whenTokenIsMissing_returnsUnauthorized() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn(null);
-
-        when(request.getRequestURI()).thenReturn("/api/users/me");
+    void doFilter_whenTokenIsMissing_continuesFilterChain() throws ServletException, IOException {
+        when(request.getHeader("Authorization"))
+                .thenReturn(null);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
-        verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verify(filterChain).doFilter(request, response);
 
         verifyNoInteractions(jwtTokenProvider);
         verifyNoInteractions(userDetailsService);
-        verifyNoInteractions(filterChain);
+        verifyNoInteractions(response);
 
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        );
     }
 
     @Test
-    void doFilter_whenTokenIsInvalid_doesNotAuthenticateUser() throws ServletException, IOException {
+    void doFilter_whenTokenIsInvalid_doesNotAuthenticateUser()
+            throws ServletException, IOException {
+
         String token = "invalid-token";
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(jwtTokenProvider.validateToken(token)).thenReturn(false);
+        when(request.getHeader("Authorization"))
+                .thenReturn("Bearer " + token);
+
+        when(jwtTokenProvider.validateToken(token))
+                .thenReturn(false);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        );
 
         verify(jwtTokenProvider).validateToken(token);
-        verify(jwtTokenProvider, never()).getUsernameFromToken(anyString());
+
+        verify(jwtTokenProvider, never())
+                .getUsernameFromToken(anyString());
+
         verifyNoInteractions(userDetailsService);
+
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    void doFilter_whenTokenIsMissingForLoginEndpoint_continuesFilterChain() throws ServletException, IOException {
-        when(request.getHeader("Authorization")).thenReturn(null);
-        when(request.getRequestURI()).thenReturn("/api/auth/login");
+    void doFilter_whenTokenIsMissingForLoginEndpoint_continuesFilterChain()
+            throws ServletException, IOException {
+
+        when(request.getHeader("Authorization"))
+                .thenReturn(null);
 
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
@@ -120,9 +156,11 @@ class JwtAuthenticationFilterTest {
 
         verifyNoInteractions(jwtTokenProvider);
         verifyNoInteractions(userDetailsService);
-        verify(response, never()).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verifyNoInteractions(response);
 
-        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        assertNull(
+                SecurityContextHolder.getContext().getAuthentication()
+        );
     }
 
     @Test
@@ -132,16 +170,13 @@ class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization"))
                 .thenReturn(null);
 
-        when(request.getRequestURI())
-                .thenReturn("/api/auth/register");
-
         jwtAuthenticationFilter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
 
         verifyNoInteractions(jwtTokenProvider);
         verifyNoInteractions(userDetailsService);
-        verify(response, never()).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        verifyNoInteractions(response);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
