@@ -7,4 +7,8 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserRepositoryCustom {
     Page<User> search(String search, String role, UserStatus status, Pageable pageable);
+
+    long countUsers();
+
+    long countActiveUsers();
 }

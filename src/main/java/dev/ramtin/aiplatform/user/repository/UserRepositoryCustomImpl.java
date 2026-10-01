@@ -43,4 +43,15 @@ public class UserRepositoryCustomImpl implements UserRepositoryCustom {
         List<User> users = mongoTemplate.find(query, User.class);
         return new PageImpl<>(users, pageable, total);
     }
+
+    @Override
+    public long countUsers() {
+        return mongoTemplate.count(new Query(), User.class);
+    }
+
+    @Override
+    public long countActiveUsers() {
+        Query query = new Query(Criteria.where("status").is(UserStatus.ACTIVE));
+        return mongoTemplate.count(query, User.class);
+    }
 }

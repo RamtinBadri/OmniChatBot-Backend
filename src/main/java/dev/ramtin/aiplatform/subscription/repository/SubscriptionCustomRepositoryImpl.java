@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.bson.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 
@@ -49,5 +51,13 @@ public class SubscriptionCustomRepositoryImpl implements SubscriptionCustomRepos
         List<Subscription> subscriptions = mongoTemplate.find(query, Subscription.class);
 
         return new PageImpl<>(subscriptions, pageable, total);
+    }
+
+    @Override
+    public long countActiveSubscribers() {
+        Aggregation aggregation = Aggregation.newAggregation(
+                Aggregation.match(Criteria.where("status").is(SubscriptionStatus.ACTIVE)),
+                Aggregation.group("userId"));
+        return (long) mongoTemplate.aggregate(aggregation, Subscription.class, Document.class).getMappedResults().size();
     }
 }
