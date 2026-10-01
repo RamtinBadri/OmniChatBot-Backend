@@ -1,9 +1,9 @@
-package dev.ramtin.aiplatform.user_balance;
+package dev.ramtin.aiplatform.user.user_balance;
 
 import dev.ramtin.aiplatform.security.CustomUserDetails;
 import dev.ramtin.aiplatform.transaction.Transaction;
-import dev.ramtin.aiplatform.user_balance.dto.PurchaseCreditRequest;
-import dev.ramtin.aiplatform.user_balance.service.UserBalanceService;
+import dev.ramtin.aiplatform.user.user_balance.dto.PurchaseCreditRequest;
+import dev.ramtin.aiplatform.user.user_balance.service.UserBalanceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

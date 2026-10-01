@@ -1,7 +1,7 @@
-package dev.ramtin.aiplatform.user_balance.service;
+package dev.ramtin.aiplatform.user.user_balance.service;
 
 import dev.ramtin.aiplatform.transaction.Transaction;
-import dev.ramtin.aiplatform.user_balance.UserBalance;
+import dev.ramtin.aiplatform.user.user_balance.UserBalance;
 
 import java.math.BigDecimal;
 

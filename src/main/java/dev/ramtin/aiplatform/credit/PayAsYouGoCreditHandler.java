@@ -1,7 +1,7 @@
 package dev.ramtin.aiplatform.credit;
 
 import dev.ramtin.aiplatform.user.CreditSource;
-import dev.ramtin.aiplatform.user_balance.service.UserBalanceService;
+import dev.ramtin.aiplatform.user.user_balance.service.UserBalanceService;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;

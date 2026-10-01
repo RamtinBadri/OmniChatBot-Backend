@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.user_balance.dto;
+package dev.ramtin.aiplatform.user.user_balance.dto;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;

@@ -1,4 +1,4 @@
-package dev.ramtin.aiplatform.user_balance;
+package dev.ramtin.aiplatform.user.user_balance;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
