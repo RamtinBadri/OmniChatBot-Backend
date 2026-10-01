@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
@@ -17,18 +18,13 @@ import java.time.LocalDateTime;
 public class AIRequest {
     @Id
     private String id;
-
     private String userId;
-
     private String conversationId;
-
     private String requestedModel;
-
     private String actualModel;
-
+    @Indexed(name = "status")
     private AIRequestStatus status;
-
+    @Indexed(name = "requestTime")
     private LocalDateTime requestTime;
-
     private LocalDateTime responseTime;
 }
