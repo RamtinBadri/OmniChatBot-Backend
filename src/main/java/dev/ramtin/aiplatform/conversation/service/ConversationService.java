@@ -15,4 +15,6 @@ public interface ConversationService {
     void archiveConversation(String conversationId, String userId);
 
     Page<ConversationDTO> getConversations(String userId, String search, ConversationStatus status, Pageable pageable);
+
+    void deleteConversation(String conversationId, String userId);
 }

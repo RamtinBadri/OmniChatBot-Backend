@@ -6,6 +6,7 @@ import dev.ramtin.aiplatform.conversation.ConversationMapper;
 import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
+import dev.ramtin.aiplatform.message.repository.MessageRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class ConversationServiceImpl implements ConversationService {
     private final ConversationRepository conversationRepository;
+    private final MessageRepository messageRepository;
 
     @Override
     public ConversationDTO createConversation(String userId, String title, String model) {
@@ -66,6 +68,13 @@ public class ConversationServiceImpl implements ConversationService {
                                                   ConversationStatus status, Pageable pageable) {
         return conversationRepository.search(userId, search, status, pageable)
                 .map(ConversationMapper::toDTO);
+    }
+
+    @Override
+    public void deleteConversation(String conversationId, String userId) {
+        Conversation conversation = getConversationForUser(conversationId, userId);
+        messageRepository.deleteAll(messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId));
+        conversationRepository.delete(conversation);
     }
 
     private Conversation getConversationForUser(String conversationId, String userId) {

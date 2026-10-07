@@ -83,4 +83,15 @@ public class ConversationController {
                 .getConversations(userId, search, status, pageable);
         return ResponseEntity.ok(conversations);
     }
+
+    @DeleteMapping("/{conversationId}")
+    public ResponseEntity<Void> deleteConversation(@PathVariable String conversationId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String userId = userDetails.getId();
+
+        conversationService.deleteConversation(conversationId, userId);
+        return ResponseEntity.noContent().build();
+    }
 }
