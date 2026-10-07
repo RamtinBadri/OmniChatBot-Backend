@@ -1,5 +1,6 @@
 package dev.ramtin.aiplatform.subscription.service;
 
+import dev.ramtin.aiplatform.exception.ResourceConflictException;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
 import dev.ramtin.aiplatform.plan.Plan;
 import dev.ramtin.aiplatform.plan.repository.PlanRepository;
@@ -32,6 +33,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public Subscription createSubscription(String userId, String planId) {
+        if (subscriptionRepository.findByUserIdAndStatus(userId, SubscriptionStatus.ACTIVE).isPresent()) {
+            throw new ResourceConflictException("User already has an active subscription");
+        }
+
         Plan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new ResourceNotFoundException("Plan not found with id: " + planId));
 
