@@ -1,7 +1,5 @@
 package dev.ramtin.aiplatform.exception;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +14,6 @@ import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
         return ResponseEntity
@@ -81,8 +78,6 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AIProviderException.class)
     public ResponseEntity<ErrorResponse> handleAIProviderException(AIProviderException exception) {
-        log.error("AI provider request failed", exception);
-
         return ResponseEntity
                 .status(HttpStatus.BAD_GATEWAY)
                 .body(new ErrorResponse(
