@@ -57,8 +57,10 @@ public class AIServiceImpl implements AIService {
     }
 
     @Override
-    public String generateResponse(String userId, String conversationId) {
-        String requestedModel = aiProperties.getDefaultModel();
+    public String generateResponse(String userId, String conversationId, String requestedModel) {
+        if (requestedModel == null || requestedModel.isBlank()) {
+            requestedModel = aiProperties.getDefaultModel();
+        }
 
         AIRequest aiRequest = AIRequest.builder()
                 .userId(userId)

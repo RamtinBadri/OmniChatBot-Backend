@@ -41,7 +41,7 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public MessageExchangeDTO createMessage(String conversationId, String content, String userId) {
-        getConversationForUser(conversationId, userId);
+        Conversation conversation = getConversationForUser(conversationId, userId);
 
         Message message = Message.builder()
                 .conversationId(conversationId)
@@ -53,7 +53,7 @@ public class MessageServiceImpl implements MessageService {
         Message savedUserMessage = messageRepository.save(message);
 
 
-        String assistantContent = aiService.generateResponse(userId, conversationId);
+        String assistantContent = aiService.generateResponse(userId, conversationId, conversation.getModel());
 
         Message assistantMessage = Message.builder()
                 .conversationId(conversationId)
@@ -76,12 +76,13 @@ public class MessageServiceImpl implements MessageService {
                 .map(MessageMapper::toDTO);
     }
 
-    private void getConversationForUser(String conversationId, String userId) {
+    private Conversation getConversationForUser(String conversationId, String userId) {
         Conversation conversation = conversationRepository.findById(conversationId).orElseThrow(() ->
                         new ResourceNotFoundException("Conversation not found with id: " + conversationId));
 
         if (!conversation.getUserId().equals(userId)) {
             throw new AccessDeniedException("You do not have access to this conversation");
         }
+        return conversation;
     }
 }

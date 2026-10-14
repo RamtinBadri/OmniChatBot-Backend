@@ -90,9 +90,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenProviderSucceeds_updatesAIRequestSuccessfully() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         ModelPricing pricing = ModelPricing.builder()
                 .model("glm-5")
                 .inputPricePerMillion(new BigDecimal("0.50"))
@@ -178,7 +175,8 @@ class AIServiceImplTest {
         String result =
                 aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 );
 
         assertEquals(
@@ -326,9 +324,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenProviderFails_marksAIRequestAsProviderError() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
                 "conversation123"
         )).thenReturn(List.of());
@@ -351,7 +346,8 @@ class AIServiceImplTest {
                 AIProviderException.class,
                 () -> aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 )
         );
 
@@ -412,9 +408,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenPricingServiceReturnsDefaultPricing_succeeds() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         ModelPricing defaultPricing = ModelPricing.builder()
                 .model("glm-5")
                 .inputPricePerMillion(new BigDecimal("0.50"))
@@ -486,7 +479,8 @@ class AIServiceImplTest {
         String result =
                 aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 );
 
         assertEquals(
@@ -513,9 +507,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenCreditSourceIsPayAsYouGo_usesPayAsYouGoHandler() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         ModelPricing pricing = ModelPricing.builder()
                 .model("glm-5")
                 .inputPricePerMillion(new BigDecimal("0.50"))
@@ -601,7 +592,8 @@ class AIServiceImplTest {
         String result =
                 aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 );
 
         assertEquals(
@@ -631,9 +623,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenPricingFails_propagatesException() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
                 "conversation123"
         )).thenReturn(List.of());
@@ -680,7 +669,8 @@ class AIServiceImplTest {
                 ModelPricingNotFoundException.class,
                 () -> aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 )
         );
 
@@ -724,9 +714,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenCreditConsumptionFails_marksAIRequestAsFailed() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
                 "conversation123"
         )).thenReturn(List.of());
@@ -800,7 +787,8 @@ class AIServiceImplTest {
                 RuntimeException.class,
                 () -> aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 )
         );
 
@@ -841,9 +829,6 @@ class AIServiceImplTest {
 
     @Test
     void generateResponse_whenFinalAIRequestSaveFails_marksAIRequestAsFailed() {
-        when(aiProperties.getDefaultModel())
-                .thenReturn("auto/best-coding");
-
         when(messageRepository.findByConversationIdOrderByCreatedAtAsc(
                 "conversation123"
         )).thenReturn(List.of());
@@ -942,7 +927,8 @@ class AIServiceImplTest {
                 RuntimeException.class,
                 () -> aiService.generateResponse(
                         "user123",
-                        "conversation123"
+                        "conversation123",
+                        "auto/best-coding"
                 )
         );
 

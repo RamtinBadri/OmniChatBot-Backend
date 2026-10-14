@@ -10,7 +10,7 @@ public interface ConversationService {
 
     ConversationDTO getConversationById(String conversationId, String userId);
 
-    ConversationDTO updateConversation(String conversationId, String userId, String title);
+    ConversationDTO updateConversation(String conversationId, String userId, String title, String model);
 
     void archiveConversation(String conversationId, String userId);
 

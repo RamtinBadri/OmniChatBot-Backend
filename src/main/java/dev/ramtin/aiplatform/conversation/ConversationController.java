@@ -3,12 +3,13 @@ package dev.ramtin.aiplatform.conversation;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;
 import dev.ramtin.aiplatform.conversation.dto.CreateConversationRequest;
 import dev.ramtin.aiplatform.conversation.dto.UpdateConversationRequest;
+import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import dev.ramtin.aiplatform.conversation.service.ConversationService;
 import dev.ramtin.aiplatform.security.CustomUserDetails;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ConversationController {
     private final ConversationService conversationService;
+    private final ModelPricingService modelPricingService;
 
     @GetMapping("/{conversationId}")
     public ResponseEntity<ConversationDTO> getConversationById(@PathVariable String conversationId) {
@@ -37,15 +39,18 @@ public class ConversationController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String userId = userDetails.getId();
+        String model = request.getModel() == null || request.getModel().isBlank()
+                ? modelPricingService.getModelCatalog(PageRequest.of(0, 1)).getDefaultModel()
+                : request.getModel();
 
         ConversationDTO conversationDTO = conversationService
-                .createConversation(userId, request.getTitle(), request.getModel());
+                .createConversation(userId, request.getTitle(), model);
         return ResponseEntity.status(HttpStatus.CREATED).body(conversationDTO);
     }
 
     @PutMapping("/{conversationId}")
     public ResponseEntity<ConversationDTO> updateConversation(
-            @PathVariable String conversationId, @Valid @RequestBody UpdateConversationRequest request) {
+            @PathVariable String conversationId, @RequestBody UpdateConversationRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
@@ -54,7 +59,8 @@ public class ConversationController {
         ConversationDTO conversationDTO = conversationService.updateConversation(
                         conversationId,
                         userId,
-                        request.getTitle());
+                        request.getTitle(),
+                        request.getModel());
         return ResponseEntity.ok(conversationDTO);
     }
 

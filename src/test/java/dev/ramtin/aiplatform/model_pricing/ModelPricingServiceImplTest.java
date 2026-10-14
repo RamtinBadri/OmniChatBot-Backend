@@ -1,8 +1,13 @@
 package dev.ramtin.aiplatform.model_pricing;
 
 import dev.ramtin.aiplatform.config.DefaultPricingProperties;
+import dev.ramtin.aiplatform.config.AIProperties;
 import dev.ramtin.aiplatform.model_pricing.repository.ModelPricingRepository;
 import dev.ramtin.aiplatform.model_pricing.service.ModelPricingServiceImpl;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteModel;
+import dev.ramtin.aiplatform.omniroute.response.OmniRouteModelsResponse;
+import dev.ramtin.aiplatform.omniroute.service.OmniRouteClient;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +25,9 @@ class ModelPricingServiceImplTest {
     @Mock
     private ModelPricingRepository modelPricingRepository;
 
+    @Mock
+    private OmniRouteClient omniRouteClient;
+
     private ModelPricingServiceImpl modelPricingService;
 
     @BeforeEach
@@ -34,11 +42,41 @@ class ModelPricingServiceImplTest {
                 new BigDecimal("2.00")
         );
 
+        AIProperties aiProperties = new AIProperties();
+        aiProperties.setDefaultModel("auto/best-coding");
         modelPricingService =
                 new ModelPricingServiceImpl(
                         modelPricingRepository,
-                        defaultPricingProperties
+                        defaultPricingProperties,
+                        aiProperties,
+                        omniRouteClient
                 );
+    }
+
+    @Test
+    void getModelCatalog_returnsProviderModelsAsPagedCatalog() {
+        when(omniRouteClient.getModels()).thenReturn(new OmniRouteModelsResponse(java.util.List.of(
+                new OmniRouteModel("auto/best-coding", "Best Coding"),
+                new OmniRouteModel("provider/model-a", "Model A")
+        )));
+
+        var catalog = modelPricingService.getModelCatalog(PageRequest.of(0, 1));
+
+        assertEquals("auto/best-coding", catalog.getDefaultModel());
+        assertEquals(2, catalog.getModels().getTotalElements());
+        assertEquals(1, catalog.getModels().getContent().size());
+        assertEquals("auto/best-coding", catalog.getModels().getContent().get(0).getId());
+        assertTrue(catalog.getModels().getContent().get(0).isDefaultModel());
+    }
+
+    @Test
+    void isAvailable_checksOmniRouteInsteadOfPricingRepository() {
+        when(omniRouteClient.getModels()).thenReturn(new OmniRouteModelsResponse(java.util.List.of(
+                new OmniRouteModel("provider/model-a", "Model A")
+        )));
+
+        assertTrue(modelPricingService.isAvailable("provider/model-a"));
+        verifyNoInteractions(modelPricingRepository);
     }
 
     @Test

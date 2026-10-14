@@ -5,6 +5,7 @@ import dev.ramtin.aiplatform.conversation.repository.ConversationRepository;
 import dev.ramtin.aiplatform.conversation.ConversationStatus;
 import dev.ramtin.aiplatform.conversation.dto.ConversationDTO;
 import dev.ramtin.aiplatform.exception.ResourceNotFoundException;
+import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,12 @@ import static org.mockito.Mockito.when;
 class ConversationServiceImplTest {
     @Mock
     private ConversationRepository conversationRepository;
+
+    @Mock
+    private dev.ramtin.aiplatform.message.repository.MessageRepository messageRepository;
+
+    @Mock
+    private ModelPricingService modelPricingService;
 
     @InjectMocks
     private ConversationServiceImpl conversationService;
@@ -85,6 +92,7 @@ class ConversationServiceImplTest {
 
     @Test
     void createConversation_createsAndReturnsConversationDTO() {
+        when(modelPricingService.isAvailable("default")).thenReturn(true);
         when(conversationRepository.save(org.mockito.ArgumentMatchers.any(Conversation.class)))
                 .thenAnswer(invocation -> {
                     Conversation conversation = invocation.getArgument(0);
@@ -124,14 +132,14 @@ class ConversationServiceImplTest {
 
         when(conversationRepository.findById("conversation123"))
                 .thenReturn(Optional.of(conversation));
-
         when(conversationRepository.save(conversation))
                 .thenReturn(conversation);
 
         var result = conversationService.updateConversation(
                 "conversation123",
                 "user123",
-                "New Title"
+                "New Title",
+                null
         );
 
         assertEquals("New Title", result.getTitle());
@@ -155,7 +163,7 @@ class ConversationServiceImplTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> conversationService.updateConversation("conversation123",
-                        "user123", "New Title"));
+                        "user123", "New Title", null));
 
         verify(conversationRepository).findById("conversation123");
     }

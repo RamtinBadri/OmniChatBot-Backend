@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CreateConversationRequest {
-    @NotBlank(message = "Title and Model must not be blank")
+    @NotBlank(message = "Title must not be blank")
     private String title;
     private String model;
 }

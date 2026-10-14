@@ -121,6 +121,7 @@ class MessageServiceImplTest {
         Conversation conversation = Conversation.builder()
                 .id("conversation123")
                 .userId("user123")
+                .model("selected-model")
                 .build();
 
         when(conversationRepository.findById("conversation123"))
@@ -139,7 +140,7 @@ class MessageServiceImplTest {
                     return message;
                 });
 
-        when(aiService.generateResponse("user123", "conversation123"))
+        when(aiService.generateResponse("user123", "conversation123", "selected-model"))
                 .thenReturn("Hi! How can I help you?");
 
         var result = messageService.createMessage(
@@ -168,7 +169,8 @@ class MessageServiceImplTest {
 
         verify(aiService).generateResponse(
                 "user123",
-                "conversation123"
+                "conversation123",
+                "selected-model"
         );
 
         verify(messageRepository, times(2)).save(
