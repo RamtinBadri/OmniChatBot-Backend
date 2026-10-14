@@ -57,25 +57,34 @@ class ModelPricingServiceImplTest {
     void getModelCatalog_returnsProviderModelsAsPagedCatalog() {
         when(omniRouteClient.getModels()).thenReturn(new OmniRouteModelsResponse(java.util.List.of(
                 new OmniRouteModel("auto/best-coding", "Best Coding"),
-                new OmniRouteModel("provider/model-a", "Model A")
+                new OmniRouteModel("provider/model-a", "Model A"),
+                new OmniRouteModel("combo/my-combo", "My Combo")
         )));
 
         var catalog = modelPricingService.getModelCatalog(PageRequest.of(0, 1));
+        var comboPage = modelPricingService.getModelCatalog(PageRequest.of(2, 1));
 
         assertEquals("auto/best-coding", catalog.getDefaultModel());
-        assertEquals(2, catalog.getModels().getTotalElements());
+        assertEquals(3, catalog.getModels().getTotalElements());
         assertEquals(1, catalog.getModels().getContent().size());
         assertEquals("auto/best-coding", catalog.getModels().getContent().get(0).getId());
         assertTrue(catalog.getModels().getContent().get(0).isDefaultModel());
+        assertEquals("combo/my-combo", comboPage.getModels().getContent().get(0).getId());
+        assertEquals("My Combo", comboPage.getModels().getContent().get(0).getName());
+        assertFalse(comboPage.getModels().getContent().get(0).isDefaultModel());
     }
 
     @Test
     void isAvailable_checksOmniRouteInsteadOfPricingRepository() {
         when(omniRouteClient.getModels()).thenReturn(new OmniRouteModelsResponse(java.util.List.of(
-                new OmniRouteModel("provider/model-a", "Model A")
+                new OmniRouteModel("provider/model-a", "Model A"),
+                new OmniRouteModel("combo/my-combo", "My Combo")
         )));
 
         assertTrue(modelPricingService.isAvailable("provider/model-a"));
+        assertTrue(modelPricingService.isAvailable("combo/my-combo"));
+        assertFalse(modelPricingService.isAvailable("combo/"));
+        assertFalse(modelPricingService.isAvailable("combo/unknown"));
         verifyNoInteractions(modelPricingRepository);
     }
 
