@@ -3,7 +3,12 @@ package dev.ramtin.aiplatform.security;
 import dev.ramtin.aiplatform.user.User;
 import dev.ramtin.aiplatform.user.repository.UserRepository;
 import dev.ramtin.aiplatform.user.UserRole;
+import dev.ramtin.aiplatform.user.service.UserService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -13,6 +18,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -29,6 +37,47 @@ class SecurityConfigTest {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private UserService userService;
+
+    @ParameterizedTest
+    @CsvSource({"PUT,/api/users/target123/role", "PATCH,/api/admin/users/target123/role"})
+    void roleAliases_withoutToken_returnUnauthorized(String method, String path) throws Exception {
+        mockMvc.perform(request(HttpMethod.valueOf(method), path)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isUnauthorized());
+
+        verifyNoInteractions(userService);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"PUT,/api/users/target123/role", "PATCH,/api/admin/users/target123/role"})
+    void roleAliases_withUserToken_returnForbidden(String method, String path) throws Exception {
+        User user = User.builder().id("user123").username("ramtin").password("password").userRole(UserRole.USER).build();
+        when(userRepository.findByUsername("ramtin")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(request(HttpMethod.valueOf(method), path)
+                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("ramtin"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(userService);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"PUT,/api/users/target123/role", "PATCH,/api/admin/users/target123/role"})
+    void roleAliases_withAdminToken_delegateToMockedService(String method, String path) throws Exception {
+        User admin = User.builder().id("admin123").username("admin").password("password").userRole(UserRole.ADMIN).build();
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+
+        mockMvc.perform(request(HttpMethod.valueOf(method), path)
+                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("admin"))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"role\":\"ADMIN\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(userService).updateUserRole("target123", UserRole.ADMIN);
+    }
 
     @Test
     void loginPreflight_fromFrontendOrigin_isAllowed() throws Exception {

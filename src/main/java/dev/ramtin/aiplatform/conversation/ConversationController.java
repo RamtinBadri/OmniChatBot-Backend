@@ -6,6 +6,7 @@ import dev.ramtin.aiplatform.conversation.dto.UpdateConversationRequest;
 import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import dev.ramtin.aiplatform.conversation.service.ConversationService;
 import dev.ramtin.aiplatform.security.CustomUserDetails;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,7 +36,7 @@ public class ConversationController {
 
     @PostMapping
     public ResponseEntity<ConversationDTO> createConversation(
-            @RequestBody CreateConversationRequest request) {
+            @Valid @RequestBody CreateConversationRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
         String userId = userDetails.getId();
@@ -50,7 +51,7 @@ public class ConversationController {
 
     @PutMapping("/{conversationId}")
     public ResponseEntity<ConversationDTO> updateConversation(
-            @PathVariable String conversationId, @RequestBody UpdateConversationRequest request) {
+            @PathVariable String conversationId, @Valid @RequestBody UpdateConversationRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();

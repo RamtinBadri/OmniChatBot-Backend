@@ -29,7 +29,7 @@ public class OmniRouteClientImpl implements OmniRouteClient {
     @Autowired
     public OmniRouteClientImpl(OmniRouteProperties properties) {
         this(properties, RestClient.builder().baseUrl(properties.getBaseUrl())
-                .requestFactory(createRequestFactory()));
+                .requestFactory(createRequestFactory(properties.getReadTimeout())));
     }
 
     OmniRouteClientImpl(OmniRouteProperties properties, RestClient.Builder restClientBuilder) {
@@ -37,10 +37,12 @@ public class OmniRouteClientImpl implements OmniRouteClient {
         this.restClient = restClientBuilder.build();
     }
 
-    private static ClientHttpRequestFactory createRequestFactory() {
+    private static ClientHttpRequestFactory createRequestFactory(Duration readTimeout) {
         HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofSeconds(30)).build();
-        return new JdkClientHttpRequestFactory(httpClient);
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(readTimeout);
+        return requestFactory;
     }
 
     @Override
