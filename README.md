@@ -77,6 +77,3 @@ The API base path is `/api`. Register and log in at `/api/auth/register` and `/a
 - [Business flows](docs/BUSINESS_FLOWS.md)
 - [Configuration and deployment](docs/CONFIGURATION_AND_DEPLOYMENT.md)
 - [Testing](docs/TESTING.md)
-- [Known issues and limitations](docs/KNOWN_ISSUES.md)
-
-`HELP.md` is the generated Spring Boot reference sheet; it is not the project setup guide and includes a stale package-name note.
