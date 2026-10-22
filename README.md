@@ -10,8 +10,6 @@ A Spring Boot REST backend for account management, conversations, AI-assisted me
 - AI message generation through OmniRoute, token-based cost calculation, selected-credit-source consumption, and usage recording.
 - User/admin APIs for plans, subscriptions, transactions, tickets, usage, and KPI summaries.
 
-No separately marked roadmap or planned-feature source was found. Features not evidenced in the current controllers/services are not described as implemented. See [known issues](docs/KNOWN_ISSUES.md) for verified caveats.
-
 ## Technology
 
 | Technology  | Version/evidence                                                   |
