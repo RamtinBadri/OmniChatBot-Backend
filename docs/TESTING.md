@@ -26,7 +26,7 @@ Test sources are under `src/test/java/dev/ramtin/aiplatform/`. The 20 discovered
 | AI and gateway | `AIServiceImplTest`, `OmniRouteClientImplTest` |
 | Authentication and security | `AuthServiceImplTest`, `CustomUserDetailsServiceTest`, `JwtAuthenticationFilterTest`, `JwtTokenProviderTest`, `CustomAuthenticationEntryPointTest`, `CustomAccessDeniedHandlerTest`, `SecurityConfigTest` |
 | Conversations and messages | `ConversationServiceImplTest`, `MessageServiceImplTest` |
-| Pricing | `CostCalculatorTest`, `ModelPricingServiceImplTest` |
+| Pricing | `CostCalculatorTest`, `ModelPricingServiceImplTest`, `ModelPricingAdminServiceTest`, `AdminModelPricingControllerTest` |
 | Plans, subscriptions, transactions | `PlanServiceImplTest`, `SubscriptionServiceImplTest`, `TransactionServiceImplTest` |
 | Balance/credit | `UserBalanceServiceImplTest` |
 | Users | `UserServiceImplTest` |
@@ -46,7 +46,7 @@ This table records the original test inventory, not a line-coverage assertion. A
 | `ModelCatalogControllerContractTest` | Nested direct-page shape, default size 20 and existing resolver cap 2000. |
 | `MonetaryCasStorageGateTest` | Opt-in storage investigation, **not production service concurrency coverage**. Decimal128 mapping, CAS races/status writes, and incompatibility with seeded string-backed amounts. |
 
-`SecurityConfigTest` additionally checks both role-update aliases for anonymous, USER and ADMIN callers, with a mocked user service so no actual role is changed.
+`SecurityConfigTest` additionally checks both role-update aliases for anonymous, USER and ADMIN callers and verifies that model-pricing management is restricted to admins.
 
 The storage investigation is disabled by default. To run it explicitly against local MongoDB:
 

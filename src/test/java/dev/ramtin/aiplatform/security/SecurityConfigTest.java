@@ -4,6 +4,7 @@ import dev.ramtin.aiplatform.user.User;
 import dev.ramtin.aiplatform.user.repository.UserRepository;
 import dev.ramtin.aiplatform.user.UserRole;
 import dev.ramtin.aiplatform.user.service.UserService;
+import dev.ramtin.aiplatform.model_pricing.service.ModelPricingService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -40,6 +41,9 @@ class SecurityConfigTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private ModelPricingService modelPricingService;
 
     @ParameterizedTest
     @CsvSource({"PUT,/api/users/target123/role", "PATCH,/api/admin/users/target123/role"})
@@ -100,6 +104,37 @@ class SecurityConfigTest {
                         .header("Access-Control-Request-Method", "POST")
                         .header("Access-Control-Request-Headers", "content-type"))
                 .andExpect(header().doesNotExist("Access-Control-Allow-Origin"));
+    }
+
+    @Test
+    void modelPricingEndpoint_withoutToken_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/admin/model-pricing")).andExpect(status().isUnauthorized());
+        verifyNoInteractions(modelPricingService);
+    }
+
+    @Test
+    void modelPricingEndpoint_withUserToken_returnsForbidden() throws Exception {
+        User user = User.builder().id("user123").username("ramtin").password("password").userRole(UserRole.USER).build();
+        when(userRepository.findByUsername("ramtin")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(get("/api/admin/model-pricing")
+                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("ramtin")))
+                .andExpect(status().isForbidden());
+        verifyNoInteractions(modelPricingService);
+    }
+
+    @Test
+    void modelPricingEndpoint_withAdminToken_delegatesToService() throws Exception {
+        User admin = User.builder().id("admin123").username("admin").password("password").userRole(UserRole.ADMIN).build();
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(modelPricingService.getDefaultInputPricePerMillion()).thenReturn(java.math.BigDecimal.ONE);
+        when(modelPricingService.getDefaultOutputPricePerMillion()).thenReturn(java.math.BigDecimal.TEN);
+        when(modelPricingService.getAllPricing()).thenReturn(java.util.List.of());
+
+        mockMvc.perform(get("/api/admin/model-pricing")
+                        .header("Authorization", "Bearer " + jwtTokenProvider.generateToken("admin")))
+                .andExpect(status().isOk());
+        verify(modelPricingService).getAllPricing();
     }
 
     @Test

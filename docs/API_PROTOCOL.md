@@ -108,6 +108,9 @@ AI requests themselves do not have a standalone client-facing controller route. 
 | `DELETE /api/admin/subscriptions/{subscriptionId}` | ADMIN | Path ID. | 204. |
 | `GET /api/admin/kpi/summary` | ADMIN | — | 200 `KpiSummaryDTO`. |
 | `GET /api/admin/kpi/usage` | ADMIN | Required `from`, `to` ISO `LocalDate` query parameters. | 200 `List<KpiUsageDTO>`; date range includes `from` and `to` calendar days. |
+| `GET /api/admin/model-pricing` | ADMIN | — | 200 `ModelPricingCatalogDTO`: configured global default input/output prices per million and persisted pricing overrides (active and inactive). |
+| `PUT /api/admin/model-pricing` | ADMIN | `ModelPricingRequest`: nonblank `model`, nonnegative `inputPricePerMillion` and `outputPricePerMillion` (up to 12 integer and 6 fractional digits), optional `active` (defaults true). | 200 saved `ModelPricing`; upserts the model override and timestamps. |
+| `DELETE /api/admin/model-pricing?model={model}` | ADMIN | Required model ID query parameter. | 204; deactivates the override so runtime uses configured global default rates. The model remains available. |
 
 ## Documentation boundaries
 
