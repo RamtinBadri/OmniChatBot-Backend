@@ -87,16 +87,16 @@ sequenceDiagram
   C->>S: POST message + Bearer JWT
   S->>MC: authenticated principal
   MC->>MS: conversationId, content, userId
-  MS->>DB: verify conversation ownership; save user message
+  MS->>DB: verify conversation ownership, then save user message
   MS->>AI: generateResponse(userId, conversationId, conversation.model)
-  AI->>DB: save PENDING then PROCESSING AI request; read ordered messages
+  AI->>DB: save PENDING then PROCESSING AI request, then read ordered messages
   AI->>OR: POST /v1/chat/completions
   OR-->>AI: model, choice, usage
   AI->>DB: lookup pricing
   AI->>Credit: consume calculated cost
   Credit->>DB: update subscription or balance
   Credit-->>AI: credit consumed
-  AI->>DB: save usage; update AI request SUCCESS
+  AI->>DB: save usage, then update AI request SUCCESS
   AI-->>MS: assistant text
   MS->>DB: save assistant message
   MS-->>C: 201 MessageExchangeDTO

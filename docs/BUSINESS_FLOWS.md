@@ -30,13 +30,13 @@ sequenceDiagram
   participant OmniRoute
   participant Billing as Pricing/Credit
   Client->>MessageService: content + authenticated user
-  MessageService->>Mongo: verify ownership; save user message
+  MessageService->>Mongo: verify ownership, then save user message
   MessageService->>AIService: conversation ID + stored model
-  AIService->>Mongo: persist PENDING/PROCESSING; load ordered messages
+  AIService->>Mongo: persist PENDING/PROCESSING, then load ordered messages
   AIService->>OmniRoute: chat completion request
   OmniRoute-->>AIService: model + choices + usage
   AIService->>Billing: calculate and consume charge
-  AIService->>Mongo: save usage; mark request SUCCESS
+  AIService->>Mongo: save usage, then mark request SUCCESS
   AIService-->>MessageService: assistant content
   MessageService->>Mongo: save assistant message
   MessageService-->>Client: message exchange
@@ -94,7 +94,7 @@ flowchart LR
   SaveSub --> CreateTxn[Create SUBSCRIPTION_PURCHASE\ntransaction in USD]
   CreateTxn --> MarkSuccess[Mark transaction SUCCESS]
   MarkSuccess --> Return[Return subscription]
-  SaveSub -.->|Later write may fail; no rollback shown| Partial[Partial state possible]
+  SaveSub -.->|Later write may fail, no rollback shown| Partial[Partial state possible]
 ```
 
 The transaction records local application state; no external payment provider is called. Subscription persistence and transaction creation/status updates are sequential, not an atomic purchase operation.
