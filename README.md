@@ -1,4 +1,4 @@
-## AI Platform Backend
+## OmniChatBot Backend
 
 A Spring Boot REST backend for account management, conversations, AI-assisted messages through OmniRoute, usage/cost tracking, credit balances, subscriptions, transactions, and support tickets. This describes the implementation present in this repository; it is not a claim that an external payment processor or production deployment is configured.
 
