@@ -53,11 +53,51 @@ On provider exception, AI status is marked `PROVIDER_ERROR`; other caught except
 - The user's configured `CreditSource` selects a handler, with no automatic fallback to another source. Subscription credit checks expiration and remaining amount; pay-as-you-go delegates to balance consumption. Insufficient balance raises `InsufficientCreditException` (422). Subscription expiration/insufficiency currently raises `IllegalStateException` (generic 500). No selected credit source maps to 400; setting the selection to null clears it.
 - Credit is consumed before usage record and AI-request success writes. A later persistence failure could therefore leave a charge without corresponding usage/success records; no transaction is shown.
 
+```mermaid
+flowchart LR
+  Provider[OmniRoute returns actual model and token usage] --> Lookup[Look up active pricing for actual model]
+  Lookup --> HasPricing{Active pricing found?}
+  HasPricing -->|Yes| Rate[Use model-specific rates]
+  HasPricing -->|No| Fallback[Use configured fallback rates in memory]
+  Rate --> Cost[Calculate cost]
+  Fallback --> Cost
+  Cost --> Source{Selected credit source?}
+  Source -->|PAYG| Balance[Consume balance credit]
+  Source -->|Subscription| Subscription[Consume subscription credit]
+  Source -->|None| Missing[Credit source error: HTTP 400]
+  Balance -->|Insufficient| BalanceError[InsufficientCreditException: HTTP 422]
+  Subscription -->|Insufficient or expired| SubscriptionError[IllegalStateException: HTTP 500]
+  Balance -->|Consumed| Usage[Save usage record]
+  Subscription -->|Consumed| Usage
+  Usage --> Success[Mark AI request SUCCESS]
+  Usage -.->|If persistence fails, prior debit remains| Partial[No cross-document rollback]
+```
+
+There is no automatic switch to another credit source. The debit precedes usage and request-success persistence, and those writes are not an atomic transaction.
+
 ## Subscription and balance operations
 
 - Subscription creation checks plan existence/activity and existing active subscription, builds subscription dates/credit from plan values, and writes a related successful transaction. There is no external payment processor call in the inspected flow; do not interpret the transaction as proof of settled payment.
 - Credit purchase accepts amount/currency/reference, creates a transaction and updates the user's balance through service logic. It does not integrate with an external payment provider in the inspected repository.
 - These related writes are sequential and not documented as atomic. Administrative transaction status updates are separate routes.
+
+```mermaid
+flowchart LR
+  Request[Create subscription request] --> Existing{Active subscription exists?}
+  Existing -->|Yes| Conflict[Conflict: already active]
+  Existing -->|No| FindPlan[Find requested plan]
+  FindPlan --> Found{Plan exists?}
+  Found -->|No| NotFound[Plan not found]
+  Found -->|Yes| Active{Plan active?}
+  Active -->|No| Inactive[Reject inactive plan]
+  Active -->|Yes| SaveSub[Save ACTIVE subscription\nplan price, duration and credit]
+  SaveSub --> CreateTxn[Create SUBSCRIPTION_PURCHASE\ntransaction in USD]
+  CreateTxn --> MarkSuccess[Mark transaction SUCCESS]
+  MarkSuccess --> Return[Return subscription]
+  SaveSub -.->|Later write may fail; no rollback shown| Partial[Partial state possible]
+```
+
+The transaction records local application state; no external payment provider is called. Subscription persistence and transaction creation/status updates are sequential, not an atomic purchase operation.
 
 ## Support tickets
 

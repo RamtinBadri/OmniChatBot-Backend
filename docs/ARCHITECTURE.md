@@ -48,6 +48,30 @@ Controllers use DTOs and mappers where present; Mongo document classes generally
 
 CORS uses the explicit `cors.allowed-origins` allowlist (default `http://localhost:5173`), methods GET/POST/PUT/PATCH/DELETE/OPTIONS, and Authorization/Content-Type headers, for `/api/**`. Wildcard origins are rejected; authentication rules are unchanged.
 
+```mermaid
+flowchart LR
+  Request[HTTP request] --> Cors[CORS policy for /api/**]
+  Cors --> Jwt[JWT authentication filter]
+  Jwt --> HasBearer{Bearer token present?}
+  HasBearer -->|Yes| Valid{Token valid?}
+  Valid -->|Yes| LoadUser[Load user details]
+  LoadUser --> Context[Set security context]
+  Valid -->|No| Authorize[Route authorization]
+  HasBearer -->|No| Authorize
+  Context --> Authorize
+  Authorize --> Public{Public route?}
+  Public -->|Yes: register, login, GET plans| Controller[Controller]
+  Public -->|No| Admin{ADMIN-only route?}
+  Admin -->|Yes| IsAdmin{Caller has ADMIN role?}
+  IsAdmin -->|Yes| Controller
+  IsAdmin -->|No| Denied[Access-denied handler]
+  Admin -->|No| Authenticated{Authenticated?}
+  Authenticated -->|Yes| Controller
+  Authenticated -->|No| Unauthenticated[Authentication entry point]
+```
+
+The JWT filter continues the chain when a token is absent, non-Bearer, or invalid; route authorization still decides access. The ADMIN-only set includes `/api/admin/**`, the listed user-management endpoints, and `PUT /api/users/*/role`; `GET /api/users/me` and other non-public routes require authentication.
+
 ## Representative AI message sequence
 
 ```mermaid
