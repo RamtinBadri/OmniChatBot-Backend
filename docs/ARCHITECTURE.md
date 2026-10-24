@@ -115,4 +115,4 @@ Spring Data Mongo repositories use `MongoRepository`; several custom repository 
 - Mongo IDs are represented as scalar strings; the database does not enforce relational foreign keys for those fields.
 - Multi-document business operations (registration plus balance creation, message exchange, subscription plus transaction, and balance purchase) are sequential service calls; no multi-document transaction annotation/session was found in the inspected flow.
 - `SendMessageRequest` declares a model property, but the controller passes only content and identity; generation uses the conversation's stored model.
-- There is no Swagger/OpenAPI setup or deployment/container definition found in the repository. See [known issues](KNOWN_ISSUES.md).
+- There is no Swagger/OpenAPI setup or deployment/container definition found in the repository.
