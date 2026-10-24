@@ -109,4 +109,4 @@ The transaction records local application state; no external payment provider is
 
 Admin KPI endpoints expose summary and usage data. Repository custom implementations use Mongo aggregation for counts, successful/failed AI statuses, usage totals/daily series and transaction summaries. Time-range details and returned fields are defined by the KPI DTO/controller rather than this general workflow description; see [API protocol](API_PROTOCOL.md).
 
-Related: [architecture](ARCHITECTURE.md), [data model](DATA_MODEL.md), [known issues](KNOWN_ISSUES.md).
+Related: [architecture](ARCHITECTURE.md), [data model](DATA_MODEL.md).
