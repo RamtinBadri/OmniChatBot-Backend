@@ -111,7 +111,3 @@ AI requests themselves do not have a standalone client-facing controller route. 
 | `GET /api/admin/model-pricing` | ADMIN | — | 200 `ModelPricingCatalogDTO`: configured global default input/output prices per million and persisted pricing overrides (active and inactive). |
 | `PUT /api/admin/model-pricing` | ADMIN | `ModelPricingRequest`: nonblank `model`, nonnegative `inputPricePerMillion` and `outputPricePerMillion` (up to 12 integer and 6 fractional digits), optional `active` (defaults true). | 200 saved `ModelPricing`; upserts the model override and timestamps. |
 | `DELETE /api/admin/model-pricing?model={model}` | ADMIN | Required model ID query parameter. | 204; deactivates the override so runtime uses configured global default rates. The model remains available. |
-
-## Documentation boundaries
-
-No Swagger/OpenAPI configuration was found in this checkout. A project Postman collection exists; its location is pending verification. There is no standalone AI request endpoint. The previous protocol's general claims about all endpoints supporting search/filter/sort or pagination were not universal: only controller-exposed parameters are listed here. For model fields and persistence details see [data model](DATA_MODEL.md); for configuration see [configuration and deployment](CONFIGURATION_AND_DEPLOYMENT.md).
